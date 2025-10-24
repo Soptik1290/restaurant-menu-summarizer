@@ -1,0 +1,10 @@
+# FastAPI
+fastapi
+uvicorn[standard]
+
+# For the OCR
+pytesseract
+
+# For downloading and opening the image
+Pillow
+httpx

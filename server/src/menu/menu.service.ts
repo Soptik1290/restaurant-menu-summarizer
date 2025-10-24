@@ -7,6 +7,12 @@ import OpenAI from 'openai';
 import * as cheerio from 'cheerio';
 import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
 
+// A helper type to define what our fetchContent function returns
+type FetchResult = {
+  data: string;
+  contentType: string;
+};
+
 @Injectable()
 export class MenuService {
   private readonly logger = new Logger(MenuService.name);
@@ -67,10 +73,10 @@ export class MenuService {
     },
   };
 
-  // Constructor without CacheManager
+  // Constructor with CacheManager injection
   constructor(
     private configService: ConfigService,
-    @Inject(CACHE_MANAGER) private cacheManager: Cache // <-- ADD THIS
+    @Inject(CACHE_MANAGER) private cacheManager: Cache 
   ) {
     this.openai = new OpenAI({
       apiKey: this.configService.get<string>('OPENAI_API_KEY'),
@@ -81,53 +87,72 @@ export class MenuService {
     this.logger.log(`Starting summarization for URL: ${url}`);
 
     const today = new Date().toISOString().split('T')[0];
-
-  // 1. Define a unique cache key for this URL and date
-    // e.g., "menu:2025-10-24:https://..."
     const cacheKey = `menu:${today}:${url}`; 
 
     try {
-      // 2. Try to get data from the cache first
+      // 1. Try to get data from the cache first
       const cachedMenu = await this.cacheManager.get(cacheKey);
 
-      // If data is found in cache (CACHE HIT)
       if (cachedMenu) {
-        this.logger.log(`CACHE HIT: Returning menu from cache for key: ${cacheKey}`); // Return cached data immediately, skip LLM call [cite: 66]
+        this.logger.log(`CACHE HIT: Returning menu from cache for key: ${cacheKey}`);
         return cachedMenu; 
       }
 
-      // 3. If no data in cache (CACHE MISS), proceed with fetching
+      // 2. If no data in cache (CACHE MISS), proceed with fetching
       this.logger.log(`CACHE MISS: Fetching menu from source for key: ${cacheKey}`);
 
-      // === ALL THE LOGIC YOU ALREADY BUILT ===
+      // 3. Fetch content and check its type
+      const content = await this.fetchContent(url);
+      
+      let textContent: string;
 
-      // Fetch HTML content
-      const htmlContent = await this.fetchHtmlContent(url);
+      // 4. --- NEW LOGIC: Content-Type Router ---
+      this.logger.log(`Content-Type detected: ${content.contentType}`);
+      
+      if (content.contentType.includes('text/html')) {
+        // --- Path A: HTML ---
+        this.logger.log('Processing as HTML with Cheerio...');
+        const $ = cheerio.load(content.data);
+        textContent = $('body').text();
+        this.logger.log('HTML content has been cleaned to plain text.');
 
-      // Clean HTML to plain text
-      const $ = cheerio.load(htmlContent);
-      const textContent = $('body').text();
-      this.logger.log('HTML content has been cleaned to plain text.');
+      } else if (content.contentType.includes('image/')) {
+        // --- Path B: Image (Call Python OCR Service) ---
+        this.logger.log('Processing as Image with OCR Service...');
+        // We call our Python service running on port 8000
+        const ocrResponse = await axios.post('http://localhost:8000/ocr', {
+          url: url, // Send the original URL to the OCR service
+        });
+        textContent = ocrResponse.data.text;
+        this.logger.log('Successfully received text from OCR service.');
 
-      // Prepare OpenAI call
+      } else {
+        // --- Path C: Unsupported ---
+        this.logger.warn(`Unsupported Content-Type: ${content.contentType}`);
+        throw new HttpException(
+          `Unsupported content type: ${content.contentType}. Only text/html and image/* are supported.`,
+          HttpStatus.UNSUPPORTED_MEDIA_TYPE,
+        );
+      }
+      
+      // 5. Prepare and Call OpenAI (This part is the same)
       const dayOfWeek = new Date().toLocaleDateString('cs-CZ', { weekday: 'long' });
       const dayOfWeekUpper = dayOfWeek.toUpperCase(); 
 
-      // !!! IMPORTANT !!!
-      // Paste your final, working systemPrompt here
+      // Your working system prompt
       const systemPrompt = `You are a helpful assistant that extracts restaurant menus from **plain text**.
-                            The current date is ${today}. Today is ${dayOfWeek} (in Czech: ${dayOfWeekUpper}).
-                            Your task is to find the section for **${dayOfWeekUpper}** in the provided text.
-                            Look for the text that matches "${dayOfWeekUpper}".
-                            Once you find the correct section (e.g., "PÁTEK"), extract **ALL** menu items listed under it.
-                            The menu often lists a soup (polévka) for the day *before* the main dishes (e.g., "GULÁŠOVÁ"). You MUST include this soup as a 'polévka' category.
-                            Extract all dishes for the day, not just the first one.
-                            If you absolutely cannot find a section for ${dayOfWeekUpper}, set daily_menu to false and menu_items to an empty array.
-                            Normalize prices to a number (e.g., "145 Kč" -> 145).
-                            Allergens should be an array of strings.
-                            Do not make up dishes or prices.`;
+                      The current date is ${today}. Today is ${dayOfWeek} (in Czech: ${dayOfWeekUpper}).
+                      Your task is to find the section for **${dayOfWeekUpper}** in the provided text.
+                      Look for the text that matches "${dayOfWeekUpper}".
+                      Once you find the correct section (e.g., "PÁTEK"), extract **ALL** menu items listed under it.
+                      The menu often lists a soup (polévka) for the day *before* the main dishes (e.g., "GULÁŠOVÁ"). You MUST include this soup as a 'polévka' category.
+                      Extract all dishes for the day, not just the first one.
+                      If you absolutely cannot find a section for ${dayOfWeekUpper}, set daily_menu to false and menu_items to an empty array.
+                      Normalize prices to a number (e.g., "145 Kč" -> 145).
+                      Allergens should be an array of strings.
+                      Do not make up dishes or prices.`;
 
-      // Call OpenAI
+      // Call OpenAI (using 'gpt-5-mini' model)
       const response = await this.openai.chat.completions.create({
         model: 'gpt-5-mini', 
         messages: [
@@ -138,7 +163,7 @@ export class MenuService {
         tool_choice: { type: 'function', function: { name: 'save_menu_json' } },
       });
 
-      // Parse response
+      // 6. Parse response
       const toolCalls = response.choices[0]?.message?.tool_calls;
 
       if (toolCalls && toolCalls[0] && toolCalls[0].type === 'function' && toolCalls[0].function.name === 'save_menu_json') {
@@ -153,7 +178,7 @@ export class MenuService {
           source_url: url,
         };
 
-        // 4. Save the final result to the cache before returning
+        // 7. Save the final result to the cache before returning
         await this.cacheManager.set(cacheKey, finalResult); 
         this.logger.log(`CACHE SET: Saved menu to cache for key: ${cacheKey}`);
 
@@ -165,9 +190,10 @@ export class MenuService {
       }
 
     } catch (error) {
-      // If any error happens, delete the cache key to avoid caching bad data
+      // If any error happens, delete the cache key
       await this.cacheManager.del(cacheKey); 
       this.logger.error(`Failed during summarize, cache cleared. Error: ${error.message}`);
+      if (error instanceof HttpException) throw error; // Re-throw known errors
       throw new HttpException(
         `Processing failed: ${error.message}`,
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -176,16 +202,35 @@ export class MenuService {
   }
 
   /**
-   * Helper function to fetch HTML content
+   * NEW Helper function to fetch content AND its Content-Type
    */
-  private async fetchHtmlContent(url: string): Promise<string> {
+  private async fetchContent(url: string): Promise<FetchResult> {
     try {
       const headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
       };
-      const response = await axios.get(url, { headers });
-      this.logger.log(`Successfully fetched content from ${url}. Length: ${response.data.length} chars.`);
-      return response.data;
+      
+      // We need 'arraybuffer' for images, but also need to check headers
+      // A simple GET request is the easiest way.
+      const response = await axios.get(url, { 
+        headers: headers,
+        // We tell axios to give us the raw data (as a string)
+        // because we will either pass it to Cheerio (string) or OCR (which re-downloads)
+        // Let's stick to string (default)
+      });
+
+      // Get the content type from the response headers
+      const contentType = response.headers['content-type'] || 'unknown';
+      
+      this.logger.log(`Successfully fetched content from ${url}. Content-Type: ${contentType}.`);
+      
+      // For text/html, response.data is a string.
+      // For images, response.data will be string-like but our OCR service handles the re-download.
+      return {
+        data: response.data,
+        contentType: contentType,
+      };
+
     } catch (error) {
       this.logger.error(`Failed to fetch content from ${url}: ${error.message}`);
       throw new HttpException(
