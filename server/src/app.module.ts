@@ -5,8 +5,8 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { MenuModule } from './menu/menu.module';
 import { ConfigModule } from '@nestjs/config';
-import { CacheModule } from '@nestjs/cache-manager'; // 1. Import CacheModule
-import { redisStore } from 'cache-manager-redis-yet'; // 2. Import the Redis driver
+import { CacheModule } from '@nestjs/cache-manager'; 
+import { redisStore } from 'cache-manager-redis-yet';
 
 @Module({
   imports: [
@@ -21,8 +21,7 @@ import { redisStore } from 'cache-manager-redis-yet'; // 2. Import the Redis dri
       host: 'localhost',
       port: 6379,
 
-      // 3600 * 1000 = 1 hour. This fulfills the task requirement
-      ttl: 3600 * 1000, // TADY BYLA TA CHYBA
+      ttl: 3600 * 1000, 
     }),
 
     MenuModule,

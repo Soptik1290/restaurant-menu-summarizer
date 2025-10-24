@@ -8,3 +8,6 @@ pytesseract
 # For downloading and opening the image
 Pillow
 httpx
+
+# For reading text from PDF files
+pdfplumber

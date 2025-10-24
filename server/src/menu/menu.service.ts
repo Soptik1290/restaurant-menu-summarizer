@@ -1,5 +1,3 @@
-// server/src/menu/menu.service.ts
-
 import { Injectable, Logger, HttpException, HttpStatus, Inject } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
@@ -126,7 +124,6 @@ export class MenuService {
         this.logger.log('Successfully received text from OCR service.');
         
       } else if (content.contentType.includes('application/pdf')) {
-        // --- !!! THIS IS THE MISSING BLOCK !!! ---
         this.logger.log('Processing as PDF with PDF Service...');
         const pdfResponse = await axios.post('http://localhost:8000/pdf', {
           url: url,
@@ -135,7 +132,6 @@ export class MenuService {
         this.logger.log('Successfully received text from PDF service.');
 
       } else {
-        // --- Path D: Unsupported ---
         this.logger.warn(`Unsupported Content-Type: ${content.contentType}`);
         throw new HttpException(
           `Unsupported content type: ${content.contentType}. Only text/html, image/*, and application/pdf are supported.`,
@@ -147,22 +143,24 @@ export class MenuService {
       const dayOfWeek = new Date().toLocaleDateString('cs-CZ', { weekday: 'long' });
       const dayOfWeekUpper = dayOfWeek.toUpperCase(); 
 
-      // Your working system prompt
-      const systemPrompt = `You are a helpful assistant that extracts restaurant menus from **plain text**.
-                      The current date is ${today}. Today is ${dayOfWeek} (in Czech: ${dayOfWeekUpper}).
-                      Your task is to find the section for **${dayOfWeekUpper}** in the provided text.
-                      Look for the text that matches "${dayOfWeekUpper}".
-                      Once you find the correct section (e.g., "PÁTEK"), extract **ALL** menu items listed under it.
-                      The menu often lists a soup (polévka) for the day *before* the main dishes (e.g., "GULÁŠOVÁ"). You MUST include this soup as a 'polévka' category.
-                      Extract all dishes for the day, not just the first one.
-                      If you absolutely cannot find a section for ${dayOfWeekUpper}, set daily_menu to false and menu_items to an empty array.
-                      Normalize prices to a number (e.g., "145 Kč" -> 145).
-                      Allergens should be an array of strings.
-                      Do not make up dishes or prices.`;
+      // Working system prompt
+      const systemPrompt = `Jsi užitečný asistent, který extrahuje jídelní lístky z **obyčejného textu**.
+                            Aktuální datum je ${today}. Dnes je ${dayOfWeek} (Česky: ${dayOfWeekUpper}).
+                            
+                            Tvým úkolem je najít v poskytnutém textu sekci pro **${dayOfWeekUpper}**.
+                            Hledej text, který odpovídá "${dayOfWeekUpper}".
+                            Jakmile najdeš správnou sekci (např. "PÁTEK"), extrahuj **VŠECHNY** položky menu, které jsou pod ní uvedeny.
+                            Menu často obsahuje polévku (např. "GULÁŠOVÁ") uvedenou *před* hlavními jídly. Tuto polévku MUSÍŠ zahrnout s kategorií 'polévka'.
+                            Extrahuj všechna jídla pro daný den, nejen to první.
+                            
+                            Pokud sekci pro ${dayOfWeekUpper} absolutně nemůžeš najít, nastav "daily_menu" na false a "menu_items" na prázdné pole [].
+                            Normalizuj ceny na číslo (např. "145 Kč" -> 145).
+                            Alergeny by měly být pole textových řetězců (stringů).
+                            Nevymýšlej si jídla ani ceny.`;
 
       // Call OpenAI
       const response = await this.openai.chat.completions.create({
-        model: 'gpt-5-mini', // Your model
+        model: 'gpt-5-mini', // Best price to performance ratio
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: `Here is the CLEANED TEXT content from the restaurant website: ${textContent.substring(0, 20000)}` },
@@ -219,11 +217,6 @@ export class MenuService {
       
       const response = await axios.get(url, { 
         headers: headers,
-        // We set responseType to 'arraybuffer' to handle binary files like PDF
-        // and images correctly. Cheerio can handle buffers.
-        // **Correction**: Let's stick to the simpler way that worked for HTML/Image
-        // Our Python service re-downloads anyway.
-        // The default `response.data` will be a string.
       });
 
       const contentType = response.headers['content-type'] || 'unknown';

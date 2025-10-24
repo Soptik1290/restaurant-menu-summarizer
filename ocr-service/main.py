@@ -1,21 +1,19 @@
-# ocr-service/main.py
-
 import httpx
 import pytesseract
-import pdfplumber  # <-- 1. Import PDF library
+import pdfplumber 
 import io
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, HttpUrl
 from PIL import Image
 
-# --- Pydantic Model (remains the same) ---
+# --- Pydantic Model---
 class ImageUrl(BaseModel):
     url: HttpUrl
 
-# --- FastAPI App (remains the same) ---
+# --- FastAPI App ---
 app = FastAPI()
 
-# --- OCR Endpoint (remains the same) ---
+# --- OCR Endpoint ---
 @app.post("/ocr")
 async def ocr_from_url(image_url: ImageUrl):
     """
@@ -41,7 +39,7 @@ async def ocr_from_url(image_url: ImageUrl):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
 
-# --- !!! NEW PDF Endpoint !!! ---
+# --- PDF Endpoint ---
 @app.post("/pdf")
 async def pdf_from_url(pdf_url: ImageUrl): # Re-using the same Pydantic model
     """
