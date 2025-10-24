@@ -1,5 +1,3 @@
-# server/.gitignore
-
 # Dependencies
 /node_modules
 

@@ -1,5 +1,3 @@
-// server/src/menu/menu.controller.ts
-
 import { Controller, Post, Body, HttpCode } from '@nestjs/common';
 import { MenuService } from './menu.service';
 import { SummarizeMenuDto } from './dto/summarize-menu.dto';

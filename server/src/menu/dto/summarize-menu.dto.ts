@@ -1,5 +1,3 @@
-// server/src/menu/dto/summarize-menu.dto.ts
-
 // We import 'validators' that will check our data.
 import { IsString, IsUrl } from 'class-validator';
 
