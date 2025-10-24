@@ -106,7 +106,7 @@ export class MenuService {
       
       let textContent: string;
 
-      // 4. --- NEW LOGIC: Content-Type Router ---
+      // 4. --- FINAL Content-Type Router ---
       this.logger.log(`Content-Type detected: ${content.contentType}`);
       
       if (content.contentType.includes('text/html')) {
@@ -119,23 +119,31 @@ export class MenuService {
       } else if (content.contentType.includes('image/')) {
         // --- Path B: Image (Call Python OCR Service) ---
         this.logger.log('Processing as Image with OCR Service...');
-        // We call our Python service running on port 8000
         const ocrResponse = await axios.post('http://localhost:8000/ocr', {
-          url: url, // Send the original URL to the OCR service
+          url: url, 
         });
         textContent = ocrResponse.data.text;
         this.logger.log('Successfully received text from OCR service.');
+        
+      } else if (content.contentType.includes('application/pdf')) {
+        // --- !!! THIS IS THE MISSING BLOCK !!! ---
+        this.logger.log('Processing as PDF with PDF Service...');
+        const pdfResponse = await axios.post('http://localhost:8000/pdf', {
+          url: url,
+        });
+        textContent = pdfResponse.data.text;
+        this.logger.log('Successfully received text from PDF service.');
 
       } else {
-        // --- Path C: Unsupported ---
+        // --- Path D: Unsupported ---
         this.logger.warn(`Unsupported Content-Type: ${content.contentType}`);
         throw new HttpException(
-          `Unsupported content type: ${content.contentType}. Only text/html and image/* are supported.`,
+          `Unsupported content type: ${content.contentType}. Only text/html, image/*, and application/pdf are supported.`,
           HttpStatus.UNSUPPORTED_MEDIA_TYPE,
         );
       }
       
-      // 5. Prepare and Call OpenAI (This part is the same)
+      // 5. Prepare and Call OpenAI
       const dayOfWeek = new Date().toLocaleDateString('cs-CZ', { weekday: 'long' });
       const dayOfWeekUpper = dayOfWeek.toUpperCase(); 
 
@@ -152,9 +160,9 @@ export class MenuService {
                       Allergens should be an array of strings.
                       Do not make up dishes or prices.`;
 
-      // Call OpenAI (using 'gpt-5-mini' model)
+      // Call OpenAI
       const response = await this.openai.chat.completions.create({
-        model: 'gpt-5-mini', 
+        model: 'gpt-5-mini', // Your model
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: `Here is the CLEANED TEXT content from the restaurant website: ${textContent.substring(0, 20000)}` },
@@ -178,7 +186,7 @@ export class MenuService {
           source_url: url,
         };
 
-        // 7. Save the final result to the cache before returning
+        // 7. Save to cache
         await this.cacheManager.set(cacheKey, finalResult); 
         this.logger.log(`CACHE SET: Saved menu to cache for key: ${cacheKey}`);
 
@@ -190,10 +198,9 @@ export class MenuService {
       }
 
     } catch (error) {
-      // If any error happens, delete the cache key
       await this.cacheManager.del(cacheKey); 
       this.logger.error(`Failed during summarize, cache cleared. Error: ${error.message}`);
-      if (error instanceof HttpException) throw error; // Re-throw known errors
+      if (error instanceof HttpException) throw error;
       throw new HttpException(
         `Processing failed: ${error.message}`,
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -202,7 +209,7 @@ export class MenuService {
   }
 
   /**
-   * NEW Helper function to fetch content AND its Content-Type
+   * Helper function to fetch content AND its Content-Type
    */
   private async fetchContent(url: string): Promise<FetchResult> {
     try {
@@ -210,24 +217,21 @@ export class MenuService {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
       };
       
-      // We need 'arraybuffer' for images, but also need to check headers
-      // A simple GET request is the easiest way.
       const response = await axios.get(url, { 
         headers: headers,
-        // We tell axios to give us the raw data (as a string)
-        // because we will either pass it to Cheerio (string) or OCR (which re-downloads)
-        // Let's stick to string (default)
+        // We set responseType to 'arraybuffer' to handle binary files like PDF
+        // and images correctly. Cheerio can handle buffers.
+        // **Correction**: Let's stick to the simpler way that worked for HTML/Image
+        // Our Python service re-downloads anyway.
+        // The default `response.data` will be a string.
       });
 
-      // Get the content type from the response headers
       const contentType = response.headers['content-type'] || 'unknown';
       
       this.logger.log(`Successfully fetched content from ${url}. Content-Type: ${contentType}.`);
       
-      // For text/html, response.data is a string.
-      // For images, response.data will be string-like but our OCR service handles the re-download.
       return {
-        data: response.data,
+        data: response.data, 
         contentType: contentType,
       };
 
