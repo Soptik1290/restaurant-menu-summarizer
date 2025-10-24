@@ -1,0 +1,18 @@
+# docker-compose.yml
+
+version: '3.8' # Use a modern version of compose syntax
+
+services:
+  # Define our Redis service
+  redis:
+    image: redis:latest # Use the official 'redis' image from Docker Hub
+    container_name: restaurant-redis # Give the container a friendly name
+    ports:
+      - "6379:6379" # Map port 6379 on our machine to port 6379 inside the container
+    volumes:
+      - redis-data:/data # This makes the cache data persistent
+
+# Define the volume for persistent storage
+# This ensures our cache survives if we restart the container
+volumes:
+  redis-data:

@@ -1,10 +1,11 @@
 // server/src/menu/menu.service.ts
 
-import { Injectable, Logger, HttpException, HttpStatus } from '@nestjs/common';
+import { Injectable, Logger, HttpException, HttpStatus, Inject } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import OpenAI from 'openai';
-import * as cheerio from 'cheerio'; // Import Cheerio
+import * as cheerio from 'cheerio';
+import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
 
 @Injectable()
 export class MenuService {
@@ -67,7 +68,10 @@ export class MenuService {
   };
 
   // Constructor without CacheManager
-  constructor(private configService: ConfigService) {
+  constructor(
+    private configService: ConfigService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache // <-- ADD THIS
+  ) {
     this.openai = new OpenAI({
       apiKey: this.configService.get<string>('OPENAI_API_KEY'),
     });
@@ -78,55 +82,67 @@ export class MenuService {
 
     const today = new Date().toISOString().split('T')[0];
 
+  // 1. Define a unique cache key for this URL and date
+    // e.g., "menu:2025-10-24:https://..."
+    const cacheKey = `menu:${today}:${url}`; 
+
     try {
-      // 1. Fetch HTML content
+      // 2. Try to get data from the cache first
+      const cachedMenu = await this.cacheManager.get(cacheKey);
+
+      // If data is found in cache (CACHE HIT)
+      if (cachedMenu) {
+        this.logger.log(`CACHE HIT: Returning menu from cache for key: ${cacheKey}`); // Return cached data immediately, skip LLM call [cite: 66]
+        return cachedMenu; 
+      }
+
+      // 3. If no data in cache (CACHE MISS), proceed with fetching
+      this.logger.log(`CACHE MISS: Fetching menu from source for key: ${cacheKey}`);
+
+      // === ALL THE LOGIC YOU ALREADY BUILT ===
+
+      // Fetch HTML content
       const htmlContent = await this.fetchHtmlContent(url);
 
-      // 2. Clean HTML to plain text using Cheerio
+      // Clean HTML to plain text
       const $ = cheerio.load(htmlContent);
       const textContent = $('body').text();
       this.logger.log('HTML content has been cleaned to plain text.');
 
-      // 3. Prepare and call OpenAI
+      // Prepare OpenAI call
       const dayOfWeek = new Date().toLocaleDateString('cs-CZ', { weekday: 'long' });
-      const dayOfWeekUpper = dayOfWeek.toUpperCase(); // "PÁTEK"
+      const dayOfWeekUpper = dayOfWeek.toUpperCase(); 
 
+      // !!! IMPORTANT !!!
+      // Paste your final, working systemPrompt here
       const systemPrompt = `You are a helpful assistant that extracts restaurant menus from **plain text**.
                             The current date is ${today}. Today is ${dayOfWeek} (in Czech: ${dayOfWeekUpper}).
-
                             Your task is to find the section for **${dayOfWeekUpper}** in the provided text.
                             Look for the text that matches "${dayOfWeekUpper}".
                             Once you find the correct section (e.g., "PÁTEK"), extract **ALL** menu items listed under it.
                             The menu often lists a soup (polévka) for the day *before* the main dishes (e.g., "GULÁŠOVÁ"). You MUST include this soup as a 'polévka' category.
                             Extract all dishes for the day, not just the first one.
-
                             If you absolutely cannot find a section for ${dayOfWeekUpper}, set daily_menu to false and menu_items to an empty array.
                             Normalize prices to a number (e.g., "145 Kč" -> 145).
                             Allergens should be an array of strings.
                             Do not make up dishes or prices.`;
 
+      // Call OpenAI
       const response = await this.openai.chat.completions.create({
-        model: 'gpt-5-mini', // Use the smart model
+        model: 'gpt-5-mini', 
         messages: [
-          {
-            role: 'system',
-            content: systemPrompt,
-          },
-          {
-            role: 'user',
-            // Send the CLEANED text, not the HTML
-            content: `Here is the CLEANED TEXT content from the restaurant website: ${textContent.substring(0, 20000)}`, 
-          },
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: `Here is the CLEANED TEXT content from the restaurant website: ${textContent.substring(0, 20000)}` },
         ],
         tools: [this.menuTool],
         tool_choice: { type: 'function', function: { name: 'save_menu_json' } },
       });
 
-      // 4. Parse the AI response
+      // Parse response
       const toolCalls = response.choices[0]?.message?.tool_calls;
 
       if (toolCalls && toolCalls[0] && toolCalls[0].type === 'function' && toolCalls[0].function.name === 'save_menu_json') {
-        
+
         this.logger.log('Successfully received structured JSON from AI.');
         const toolCall = toolCalls[0];
         const menuData = JSON.parse(toolCall.function.arguments);
@@ -137,7 +153,10 @@ export class MenuService {
           source_url: url,
         };
 
-        // TODO: Caching will be added here
+        // 4. Save the final result to the cache before returning
+        await this.cacheManager.set(cacheKey, finalResult); 
+        this.logger.log(`CACHE SET: Saved menu to cache for key: ${cacheKey}`);
+
         return finalResult;
 
       } else {
@@ -146,7 +165,9 @@ export class MenuService {
       }
 
     } catch (error) {
-      this.logger.error(`Failed during summarize. Error: ${error.message}`);
+      // If any error happens, delete the cache key to avoid caching bad data
+      await this.cacheManager.del(cacheKey); 
+      this.logger.error(`Failed during summarize, cache cleared. Error: ${error.message}`);
       throw new HttpException(
         `Processing failed: ${error.message}`,
         HttpStatus.INTERNAL_SERVER_ERROR,
