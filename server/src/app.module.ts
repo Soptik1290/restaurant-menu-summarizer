@@ -1,5 +1,3 @@
-// server/src/app.module.ts
-
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -10,18 +8,18 @@ import { redisStore } from 'cache-manager-redis-yet';
 
 @Module({
   imports: [
+    // Global configuration module
     ConfigModule.forRoot({
       isGlobal: true,
     }),
 
+    // Redis cache configuration with 1 hour TTL
     CacheModule.register({
       isGlobal: true, 
       store: redisStore,
-
       host: 'localhost',
       port: 6379,
-
-      ttl: 3600 * 1000, 
+      ttl: 3600 * 1000, // 1 hour in milliseconds
     }),
 
     MenuModule,

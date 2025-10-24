@@ -6,20 +6,15 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, HttpUrl
 from PIL import Image
 
-# --- Pydantic Model---
 class ImageUrl(BaseModel):
     url: HttpUrl
 
-# --- FastAPI App ---
 app = FastAPI()
 
-# --- OCR Endpoint ---
 @app.post("/ocr")
 async def ocr_from_url(image_url: ImageUrl):
     """
-    This endpoint receives an image URL, downloads the image,
-    runs Tesseract OCR (with Czech language support),
-    and returns the extracted text.
+    Extracts text from image using OCR with Czech language support
     """
     try:
         async with httpx.AsyncClient() as client:
@@ -39,40 +34,32 @@ async def ocr_from_url(image_url: ImageUrl):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
 
-# --- PDF Endpoint ---
 @app.post("/pdf")
-async def pdf_from_url(pdf_url: ImageUrl): # Re-using the same Pydantic model
+async def pdf_from_url(pdf_url: ImageUrl):
     """
-    This endpoint receives a PDF URL, downloads the file,
-    extracts all text from it, and returns the combined text.
+    Extracts text from PDF file and returns combined text from all pages
     """
     try:
-        # 1. Asynchronously download the PDF file
+        # Download PDF file
         async with httpx.AsyncClient() as client:
             response = await client.get(str(pdf_url.url))
             response.raise_for_status()
 
-        # 2. Open the PDF from in-memory bytes
+        # Process PDF with pdfplumber
         pdf_bytes = io.BytesIO(response.content)
-        
         all_text = ""
         
-        # 3. Use pdfplumber to open and read the PDF
         with pdfplumber.open(pdf_bytes) as pdf:
-            # Loop through all pages in the PDF
             for page in pdf.pages:
-                # Extract text from the current page
                 text = page.extract_text()
                 if text:
-                    all_text += text + "\n" # Add text and a newline
+                    all_text += text + "\n"
 
-        # 4. Return the combined text from all pages
         return {"text": all_text}
 
     except httpx.RequestError as e:
         raise HTTPException(status_code=400, detail=f"Failed to download PDF: {str(e)}")
     except Exception as e:
-        # Handle errors like corrupted PDFs
         raise HTTPException(status_code=500, detail=f"An error occurred processing the PDF: {str(e)}")
 
 if __name__ == "__main__":

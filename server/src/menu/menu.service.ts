@@ -5,7 +5,9 @@ import OpenAI from 'openai';
 import * as cheerio from 'cheerio';
 import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
 
-// A helper type to define what our fetchContent function returns
+/**
+ * Result type for content fetching operations
+ */
 type FetchResult = {
   data: string;
   contentType: string;
@@ -16,7 +18,10 @@ export class MenuService {
   private readonly logger = new Logger(MenuService.name);
   private openai: OpenAI;
 
-  // This is the JSON structure we force the AI to return
+  /**
+   * OpenAI function tool definition for structured menu extraction
+   * Forces AI to return data in specific JSON format
+   */
   private readonly menuTool = {
     type: 'function' as const,
     function: {
@@ -71,7 +76,6 @@ export class MenuService {
     },
   };
 
-  // Constructor with CacheManager injection
   constructor(
     private configService: ConfigService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache 
@@ -81,6 +85,10 @@ export class MenuService {
     });
   }
 
+  /**
+   * Main method to extract and summarize restaurant menu from URL
+   * Supports HTML, images (OCR), and PDF content with caching
+   */
   async summarize(url: string) {
     this.logger.log(`Starting summarization for URL: ${url}`);
 
@@ -88,34 +96,30 @@ export class MenuService {
     const cacheKey = `menu:${today}:${url}`; 
 
     try {
-      // 1. Try to get data from the cache first
+      // Check cache first
       const cachedMenu = await this.cacheManager.get(cacheKey);
-
       if (cachedMenu) {
         this.logger.log(`CACHE HIT: Returning menu from cache for key: ${cacheKey}`);
         return cachedMenu; 
       }
 
-      // 2. If no data in cache (CACHE MISS), proceed with fetching
       this.logger.log(`CACHE MISS: Fetching menu from source for key: ${cacheKey}`);
 
-      // 3. Fetch content and check its type
+      // Fetch and process content based on type
       const content = await this.fetchContent(url);
-      
       let textContent: string;
 
-      // 4. --- FINAL Content-Type Router ---
       this.logger.log(`Content-Type detected: ${content.contentType}`);
       
       if (content.contentType.includes('text/html')) {
-        // --- Path A: HTML ---
+        // Process HTML content with Cheerio
         this.logger.log('Processing as HTML with Cheerio...');
         const $ = cheerio.load(content.data);
         textContent = $('body').text();
         this.logger.log('HTML content has been cleaned to plain text.');
 
       } else if (content.contentType.includes('image/')) {
-        // --- Path B: Image (Call Python OCR Service) ---
+        // Process image with OCR service
         this.logger.log('Processing as Image with OCR Service...');
         const ocrResponse = await axios.post('http://localhost:8000/ocr', {
           url: url, 
@@ -124,6 +128,7 @@ export class MenuService {
         this.logger.log('Successfully received text from OCR service.');
         
       } else if (content.contentType.includes('application/pdf')) {
+        // Process PDF with PDF service
         this.logger.log('Processing as PDF with PDF Service...');
         const pdfResponse = await axios.post('http://localhost:8000/pdf', {
           url: url,
@@ -139,11 +144,10 @@ export class MenuService {
         );
       }
       
-      // 5. Prepare and Call OpenAI
+      // Process with OpenAI
       const dayOfWeek = new Date().toLocaleDateString('cs-CZ', { weekday: 'long' });
       const dayOfWeekUpper = dayOfWeek.toUpperCase(); 
 
-      // Working system prompt
       const systemPrompt = `Jsi užitečný asistent, který extrahuje jídelní lístky z **obyčejného textu**.
                             Aktuální datum je ${today}. Dnes je ${dayOfWeek} (Česky: ${dayOfWeekUpper}).
                             
@@ -158,9 +162,8 @@ export class MenuService {
                             Alergeny by měly být pole textových řetězců (stringů).
                             Nevymýšlej si jídla ani ceny.`;
 
-      // Call OpenAI
       const response = await this.openai.chat.completions.create({
-        model: 'gpt-5-mini', // Best price to performance ratio
+        model: 'gpt-5-mini',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: `Here is the CLEANED TEXT content from the restaurant website: ${textContent.substring(0, 20000)}` },
@@ -169,11 +172,10 @@ export class MenuService {
         tool_choice: { type: 'function', function: { name: 'save_menu_json' } },
       });
 
-      // 6. Parse response
+      // Parse AI response
       const toolCalls = response.choices[0]?.message?.tool_calls;
 
       if (toolCalls && toolCalls[0] && toolCalls[0].type === 'function' && toolCalls[0].function.name === 'save_menu_json') {
-
         this.logger.log('Successfully received structured JSON from AI.');
         const toolCall = toolCalls[0];
         const menuData = JSON.parse(toolCall.function.arguments);
@@ -184,7 +186,7 @@ export class MenuService {
           source_url: url,
         };
 
-        // 7. Save to cache
+        // Cache the result
         await this.cacheManager.set(cacheKey, finalResult); 
         this.logger.log(`CACHE SET: Saved menu to cache for key: ${cacheKey}`);
 
@@ -207,7 +209,8 @@ export class MenuService {
   }
 
   /**
-   * Helper function to fetch content AND its Content-Type
+   * Fetches content from URL and returns both data and content type
+   * Used to determine processing method (HTML, OCR, PDF)
    */
   private async fetchContent(url: string): Promise<FetchResult> {
     try {

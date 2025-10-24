@@ -1,0 +1,10 @@
+# Ignore top-level node_modules (from concurrently, etc.)
+/node_modules
+
+# Ignore Python virtual environments
+/ocr-service/venv
+# Add similar lines if you create other venvs
+
+# Ignore OS-specific files
+.DS_Store
+Thumbs.db
