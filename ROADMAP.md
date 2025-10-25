@@ -11,6 +11,13 @@ Develop a system capable of finding and displaying restaurant menus using AI and
 
 ## 🚀 Planned Features
 
+### 🧩 Structured JSON Viewer
+Display structured JSON data directly in the interface.
+By default, the JSON will be visible and expanded, allowing users to see all key-value pairs.
+Users will also have the option to collapse or hide the JSON view for better readability and a cleaner interface.
+
+---
+
 ### 🧠 Smart Menu Finder
 **Description:**  
 Automatically find a restaurant’s menu using only its name.  
