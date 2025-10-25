@@ -7,7 +7,7 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        'dxh-accent': '#2ad8bf',
+        'dxh-primary': '#2ad8bf',
       },
     },
     plugins: [],
