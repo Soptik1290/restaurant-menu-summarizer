@@ -1,13 +1,10 @@
+/* client/src/index.css */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Add these styles */
 @layer base {
   body {
-    /* Set dark background and light text color */
-    @apply bg-gray-900 text-gray-100;
-    /* Ensure the app takes at least the full screen height */
-    @apply min-h-screen;
+    @apply bg-gray-900 text-gray-100 min-h-screen;
   }
 }

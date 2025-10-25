@@ -7,7 +7,7 @@ from pydantic import BaseModel, HttpUrl
 from PIL import Image
 
 class ImageUrl(BaseModel):
-    url: HttpUrl
+    url: HttpUrl 
 
 app = FastAPI()
 
