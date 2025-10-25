@@ -1,9 +1,11 @@
-/* client/src/index.css */
+/* Hlavní CSS soubor aplikace s Tailwind CSS */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
+
+  /* Globální styly pro body element */
   body {
     @apply bg-zinc-900 text-gray-100 min-h-screen;
   }

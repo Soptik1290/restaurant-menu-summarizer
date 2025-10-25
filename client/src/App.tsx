@@ -1,15 +1,27 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import UrlInput from './components/UrlInput';
-import SubmittedUrlPill from './components/SubmittedUrlPill'; // Make sure this import exists
+import SubmittedUrlPill from './components/SubmittedUrlPill';
 import { MenuResponse } from './types/menu';
 
+/**
+ * Hlavní komponenta aplikace pro sumarizaci jídelních lístků
+ * Spravuje stav načítání, chyb a zobrazení výsledků
+ */
 function App() {
+  // Stav pro indikaci načítání
   const [isLoading, setIsLoading] = useState(false);
+  // Stav pro zobrazení chybových zpráv
   const [error, setError] = useState<string | null>(null);
+  // Stav pro uložení extrahovaných dat menu
   const [menuData, setMenuData] = useState<MenuResponse | null>(null);
+  // Stav pro uložení odeslané URL
   const [submittedUrl, setSubmittedUrl] = useState<string | null>(null);
 
+  /**
+   * Handler pro zpracování požadavku na sumarizaci menu
+   * @param url URL restaurace pro extrakci menu
+   */
   const handleSummarize = async (url: string) => {
     setIsLoading(true);
     setError(null);
@@ -17,6 +29,7 @@ function App() {
     setSubmittedUrl(url);
 
     try {
+      // Volání API pro extrakci a sumarizaci menu
       const response = await axios.post<MenuResponse>(
         'http://localhost:3001/menu/summarize',
         { url: url }
@@ -30,6 +43,9 @@ function App() {
     }
   };
 
+  /**
+   * Handler pro vymazání odeslané URL a resetování stavu
+   */
   const handleClearUrl = () => {
     setSubmittedUrl(null);
     setMenuData(null);
@@ -37,41 +53,32 @@ function App() {
   };
 
   return (
-    // Adjust flexbox alignment based on submittedUrl state
-    <div className={`min-h-screen flex flex-col items-center p-4 ${submittedUrl === null ? 'justify-center' : 'justify-start' // Center ONLY initially
-      }`}>
+    // Hlavní kontejner s dynamickým zarovnáním podle stavu
+    <div className={`min-h-screen flex flex-col items-center p-4 ${submittedUrl === null ? 'justify-center' : 'justify-start'}`}>
 
-      {/* --- Header Area --- */}
-      {/* Add relative positioning for stacking context */}
+      {/* --- Hlavička aplikace --- */}
       <div className="w-full max-w-4xl flex flex-col items-center mb-6 relative">
-        {/* Only show the title when the input form is centered and visible */}
+        {/* Zobrazení titulku pouze když je formulář vycentrovaný */}
         {submittedUrl === null && (
           <h1 className="text-4xl font-bold text-dxh-primary mb-6 transition-opacity duration-300 ease-in-out">
             Restaurant Menu Summarizer
           </h1>
         )}
 
-        {/* Input Form - Always rendered, but opacity changes */}
-        {/* Use z-index if needed, though opacity + pointer-events should suffice */}
-        <div className={`w-full max-w-lg transition-opacity duration-300 ease-in-out ${submittedUrl === null ? 'opacity-100' : 'opacity-0 pointer-events-none' // Show/Hide based on state
-          }`}>
-          {/* Ensure isCentered prop is passed */}
+        {/* Formulář pro zadání URL - vždy vykreslen, mění se pouze opacity */}
+        <div className={`w-full max-w-lg transition-opacity duration-300 ease-in-out ${submittedUrl === null ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
           <UrlInput onSubmit={handleSummarize} isLoading={isLoading} isCentered={true} />
         </div>
 
-        {/* Pill - Always rendered (underneath initially), opacity changes */}
-        {/* Use fixed positioning */}
-        <div className={`fixed top-6 left-1/2 -translate-x-1/2 z-10 w-full max-w-lg transition-opacity duration-300 ease-in-out ${submittedUrl !== null ? 'opacity-100' : 'opacity-0 pointer-events-none' // Show/Hide based on state
-          }`}>
-          {/* Render pill only if URL exists to avoid rendering with empty string initially */}
+        {/* Pill s odeslanou URL - vždy vykreslen, mění se pouze opacity */}
+        <div className={`fixed top-6 left-1/2 -translate-x-1/2 z-10 w-full max-w-lg transition-opacity duration-300 ease-in-out ${submittedUrl !== null ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
           {submittedUrl && <SubmittedUrlPill url={submittedUrl} onClear={handleClearUrl} isLoading={isLoading} />}
         </div>
       </div>
 
-      {/* --- Content Area (Errors or Results) --- */}
-      {/* Use transitions for content fade-in, ensure enough margin-top */}
+      {/* --- Oblast obsahu (chyby nebo výsledky) --- */}
       <div className={`w-full max-w-2xl transition-opacity duration-500 ease-in-out ${submittedUrl !== null ? 'mt-32 opacity-100' : 'opacity-0 pointer-events-none'}`}>
-        {/* Show loading indicator */}
+        {/* Indikátor načítání */}
         {isLoading && (
           <div className="flex justify-center items-center p-10">
             <svg className="animate-spin h-10 w-10 text-dxh-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -81,7 +88,7 @@ function App() {
           </div>
         )}
 
-        {/* Show error if exists (and not loading) */}
+        {/* Zobrazení chyby (pokud existuje a neprobíhá načítání) */}
         {error && !isLoading && (
           <div className="p-4 bg-red-900 border border-red-700 text-red-200 rounded">
             <p className="font-semibold">Error:</p>
@@ -89,7 +96,7 @@ function App() {
           </div>
         )}
 
-        {/* Show menu data if exists (and not loading) */}
+        {/* Zobrazení dat menu (pokud existují a neprobíhá načítání) */}
         {menuData && !isLoading && (
           <div className="p-6 bg-gray-800 rounded-lg shadow-md">
             <h2 className="text-2xl font-semibold mb-4 text-center">{menuData.restaurant_name}</h2>
@@ -120,9 +127,9 @@ function App() {
             </p>
           </div>
         )}
-      </div> {/* End of Content Area */}
+      </div>
 
-    </div> // End of Main container
+    </div>
   );
 }
 

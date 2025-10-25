@@ -2,8 +2,11 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import App from './App';
 
-test('renders learn react link', () => {
+/**
+ * Test pro ověření základního vykreslení aplikace
+ */
+test('renders restaurant menu summarizer title', () => {
   render(<App />);
-  const linkElement = screen.getByText(/learn react/i);
-  expect(linkElement).toBeInTheDocument();
+  const titleElement = screen.getByText(/Restaurant Menu Summarizer/i);
+  expect(titleElement).toBeInTheDocument();
 });

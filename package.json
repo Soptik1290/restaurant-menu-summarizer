@@ -1,4 +1,7 @@
 {
+  "name": "restaurant-menu-summarizer",
+  "version": "1.0.0",
+  "description": "Aplikace pro extrakci a sumarizaci jídelních lístků restaurací pomocí AI",
   "devDependencies": {
     "concurrently": "^9.2.1"
   }
