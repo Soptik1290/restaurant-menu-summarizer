@@ -1,0 +1,8 @@
+docker-compose up > Main
+
+source venv/Scripts/activate
+uvicorn main:app --reload > ocr-service
+
+npm run start:dev > server
+
+npm start > client
