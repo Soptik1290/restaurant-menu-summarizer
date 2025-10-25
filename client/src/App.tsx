@@ -32,7 +32,7 @@ function App() {
 
   return (
     <div className="min-h-screen flex flex-col items-center p-4">
-      <h1 className="text-4xl font-bold text-blue-400 mt-8 mb-6">
+      <h1 className="text-4xl font-bold text-dxh-accent mt-8 mb-6">
         Restaurant Menu Summarizer
       </h1>
 
@@ -61,7 +61,7 @@ function App() {
                 <li key={index} className="p-3 bg-gray-700 rounded shadow">
                   <div className="flex justify-between items-center mb-1">
                     <span className="font-medium">{item.name}</span>
-                    <span className="text-lg font-semibold text-blue-400">{item.price},-</span>
+                    <span className="text-lg font-semibold text-dxh-accent">{item.price},-</span>
                   </div>
                   <div className="text-sm text-gray-400 flex justify-between">
                     <span>{item.category} {item.weight ? `(${item.weight})` : ''}</span>
@@ -76,7 +76,7 @@ function App() {
             <p className="text-center text-gray-400">No daily menu found for today.</p>
           )}
           <p className="text-xs text-gray-500 mt-4 text-center">
-            Source: <a href={menuData.source_url} target="_blank" rel="noopener noreferrer" className="underline hover:text-blue-400">{menuData.source_url}</a>
+            Source: <a href={menuData.source_url} target="_blank" rel="noopener noreferrer" className="underline hover:text-dxh-accent">{menuData.source_url}</a>
           </p>
         </div>
       )}

@@ -5,7 +5,11 @@ module.exports = {
     "./src/**/*.{js,jsx,ts,tsx}", // Watch src files
   ],
   theme: {
-    extend: {},
-  },
-  plugins: [],
+    extend: {
+      colors: {
+        'dxh-accent': '#2ad8bf',
+      },
+    },
+    plugins: [],
+  }
 }
