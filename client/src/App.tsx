@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import UrlInput from './components/UrlInput';
-import SubmittedUrlPill from './components/SubmittedUrlPill';
+import SubmittedUrlPill from './components/SubmittedUrlPill'; // Make sure this import exists
 import { MenuResponse } from './types/menu';
 
 function App() {
@@ -42,26 +42,35 @@ function App() {
       }`}>
 
       {/* --- Header Area --- */}
-      <div className="w-full max-w-4xl flex flex-col items-center mb-6"> {/* Removed top margin */}
-        <h1 className="text-4xl font-bold text-dxh-primary mb-6">
-          Restaurant Menu Summarizer
-        </h1>
-
-        {/* Conditionally render Input form OR the Pill */}
-        {submittedUrl === null ? (
-          // Show input form if no URL submitted yet
-          <div className="w-full max-w-lg">
-            {/* Pass isCentered prop */}
-            <UrlInput onSubmit={handleSummarize} isLoading={isLoading} isCentered={true} />
-          </div>
-        ) : (
-          // Show the submitted URL pill if a URL was submitted
-          <SubmittedUrlPill url={submittedUrl} onClear={handleClearUrl} isLoading={isLoading} />
+      {/* Add relative positioning for stacking context */}
+      <div className="w-full max-w-4xl flex flex-col items-center mb-6 relative">
+        {/* Only show the title when the input form is centered and visible */}
+        {submittedUrl === null && (
+          <h1 className="text-4xl font-bold text-dxh-primary mb-6 transition-opacity duration-300 ease-in-out">
+            Restaurant Menu Summarizer
+          </h1>
         )}
+
+        {/* Input Form - Always rendered, but opacity changes */}
+        {/* Use z-index if needed, though opacity + pointer-events should suffice */}
+        <div className={`w-full max-w-lg transition-opacity duration-300 ease-in-out ${submittedUrl === null ? 'opacity-100' : 'opacity-0 pointer-events-none' // Show/Hide based on state
+          }`}>
+          {/* Ensure isCentered prop is passed */}
+          <UrlInput onSubmit={handleSummarize} isLoading={isLoading} isCentered={true} />
+        </div>
+
+        {/* Pill - Always rendered (underneath initially), opacity changes */}
+        {/* Use fixed positioning */}
+        <div className={`fixed top-6 left-1/2 -translate-x-1/2 z-10 w-full max-w-lg transition-opacity duration-300 ease-in-out ${submittedUrl !== null ? 'opacity-100' : 'opacity-0 pointer-events-none' // Show/Hide based on state
+          }`}>
+          {/* Render pill only if URL exists to avoid rendering with empty string initially */}
+          {submittedUrl && <SubmittedUrlPill url={submittedUrl} onClear={handleClearUrl} isLoading={isLoading} />}
+        </div>
       </div>
 
       {/* --- Content Area (Errors or Results) --- */}
-      <div className={`w-full max-w-2xl ${submittedUrl !== null ? 'mt-6' : ''}`}> {/* Add margin only when results shown */}
+      {/* Use transitions for content fade-in, ensure enough margin-top */}
+      <div className={`w-full max-w-2xl transition-opacity duration-500 ease-in-out ${submittedUrl !== null ? 'mt-32 opacity-100' : 'opacity-0 pointer-events-none'}`}>
         {/* Show loading indicator */}
         {isLoading && (
           <div className="flex justify-center items-center p-10">
