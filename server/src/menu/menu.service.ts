@@ -30,9 +30,9 @@ export class MenuService {
       parameters: {
         type: 'object' as const,
         properties: {
-          restaurant_name: { 
-            type: 'string', 
-            description: 'The name of the restaurant.' 
+          restaurant_name: {
+            type: 'string',
+            description: 'The name of the restaurant.'
           },
           menu_items: {
             type: 'array',
@@ -40,17 +40,17 @@ export class MenuService {
             items: {
               type: 'object',
               properties: {
-                category: { 
-                  type: 'string', 
-                  description: 'Category (e.g., "polévka", "hlavní jidlo", "dezert").' 
+                category: {
+                  type: 'string',
+                  description: 'Category (e.g., "polévka", "hlavní jidlo", "dezert").'
                 },
-                name: { 
-                  type: 'string', 
-                  description: 'Name of the dish.' 
+                name: {
+                  type: 'string',
+                  description: 'Name of the dish.'
                 },
-                price: { 
-                  type: 'number', 
-                  description: 'Price of the dish as a number (e.g., 145).' 
+                price: {
+                  type: 'number',
+                  description: 'Price of the dish as a number (e.g., 145).'
                 },
                 allergens: {
                   type: 'array',
@@ -78,7 +78,7 @@ export class MenuService {
 
   constructor(
     private configService: ConfigService,
-    @Inject(CACHE_MANAGER) private cacheManager: Cache 
+    @Inject(CACHE_MANAGER) private cacheManager: Cache
   ) {
     this.openai = new OpenAI({
       apiKey: this.configService.get<string>('OPENAI_API_KEY'),
@@ -93,14 +93,14 @@ export class MenuService {
     this.logger.log(`Starting summarization for URL: ${url}`);
 
     const today = new Date().toISOString().split('T')[0];
-    const cacheKey = `menu:${today}:${url}`; 
+    const cacheKey = `menu:${today}:${url}`;
 
     try {
       // Check cache first
       const cachedMenu = await this.cacheManager.get(cacheKey);
       if (cachedMenu) {
         this.logger.log(`CACHE HIT: Returning menu from cache for key: ${cacheKey}`);
-        return cachedMenu; 
+        return cachedMenu;
       }
 
       this.logger.log(`CACHE MISS: Fetching menu from source for key: ${cacheKey}`);
@@ -110,7 +110,7 @@ export class MenuService {
       let textContent: string;
 
       this.logger.log(`Content-Type detected: ${content.contentType}`);
-      
+
       if (content.contentType.includes('text/html')) {
         // Process HTML content with Cheerio
         this.logger.log('Processing as HTML with Cheerio...');
@@ -122,11 +122,11 @@ export class MenuService {
         // Process image with OCR service
         this.logger.log('Processing as Image with OCR Service...');
         const ocrResponse = await axios.post('http://localhost:8000/ocr', {
-          url: url, 
+          url: url,
         });
         textContent = ocrResponse.data.text;
         this.logger.log('Successfully received text from OCR service.');
-        
+
       } else if (content.contentType.includes('application/pdf')) {
         // Process PDF with PDF service
         this.logger.log('Processing as PDF with PDF Service...');
@@ -143,21 +143,21 @@ export class MenuService {
           HttpStatus.UNSUPPORTED_MEDIA_TYPE,
         );
       }
-      
+
       // Process with OpenAI
       const dayOfWeek = new Date().toLocaleDateString('cs-CZ', { weekday: 'long' });
-      const dayOfWeekUpper = dayOfWeek.toUpperCase(); 
+      const dayOfWeekUpper = dayOfWeek.toUpperCase();
 
       const systemPrompt = `Jsi užitečný asistent, který extrahuje jídelní lístky z **obyčejného textu**.
                             Aktuální datum je ${today}. Dnes je ${dayOfWeek} (Česky: ${dayOfWeekUpper}).
-                            
-                            Tvým úkolem je najít v poskytnutém textu sekci pro **${dayOfWeekUpper}**.
-                            Hledej text, který odpovídá "${dayOfWeekUpper}".
-                            Jakmile najdeš správnou sekci (např. "PÁTEK"), extrahuj **VŠECHNY** položky menu, které jsou pod ní uvedeny.
+
+                            Tvým úkolem je najít menu pro dnešní den (${today}).
+                            1. Nejdříve hledej v textu sekci, která odpovídá dnešnímu dni: "${dayOfWeekUpper}". Pokud ji najdeš, extrahuj VŠECHNY položky pod ní.
+                            2. **Pokud sekci "${dayOfWeekUpper}" nenajdeš:** Zkontroluj, jestli text neobsahuje nadpis jako "Víkendové menu", "Víkendová nabídka" nebo podobný, A ZÁROVEŇ jestli uvedený rozsah dat (pokud existuje) zahrnuje dnešní datum (${today}). Pokud ano, extrahuj VŠECHNY položky uvedené v této víkendové nabídce.
+                            3. Pokud nenajdeš ani specifickou sekci pro dnešní den, ani platnou víkendovou nabídku pro dnešek, nastav "daily_menu" na false a "menu_items" na prázdné pole [].
+
                             Menu často obsahuje polévku (např. "GULÁŠOVÁ") uvedenou *před* hlavními jídly. Tuto polévku MUSÍŠ zahrnout s kategorií 'polévka'.
-                            Extrahuj všechna jídla pro daný den, nejen to první.
-                            
-                            Pokud sekci pro ${dayOfWeekUpper} absolutně nemůžeš najít, nastav "daily_menu" na false a "menu_items" na prázdné pole [].
+                            Extrahuj všechna jídla pro daný den/nabídku.
                             Normalizuj ceny na číslo (např. "145 Kč" -> 145).
                             Alergeny by měly být pole textových řetězců (stringů).
                             Nevymýšlej si jídla ani ceny.`;
@@ -187,7 +187,7 @@ export class MenuService {
         };
 
         // Cache the result
-        await this.cacheManager.set(cacheKey, finalResult); 
+        await this.cacheManager.set(cacheKey, finalResult);
         this.logger.log(`CACHE SET: Saved menu to cache for key: ${cacheKey}`);
 
         return finalResult;
@@ -198,7 +198,7 @@ export class MenuService {
       }
 
     } catch (error) {
-      await this.cacheManager.del(cacheKey); 
+      await this.cacheManager.del(cacheKey);
       this.logger.error(`Failed during summarize, cache cleared. Error: ${error.message}`);
       if (error instanceof HttpException) throw error;
       throw new HttpException(
@@ -217,17 +217,17 @@ export class MenuService {
       const headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
       };
-      
-      const response = await axios.get(url, { 
+
+      const response = await axios.get(url, {
         headers: headers,
       });
 
       const contentType = response.headers['content-type'] || 'unknown';
-      
+
       this.logger.log(`Successfully fetched content from ${url}. Content-Type: ${contentType}.`);
-      
+
       return {
-        data: response.data, 
+        data: response.data,
         contentType: contentType,
       };
 
