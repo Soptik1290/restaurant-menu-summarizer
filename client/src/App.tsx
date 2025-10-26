@@ -47,41 +47,34 @@ function App() {
   };
 
   return (
-    // Add 'relative' for positioning context of fixed children if needed
-    <div className={`min-h-screen flex flex-col items-center p-4 relative ${submittedUrl === null ? 'justify-center' : 'justify-start'
+    // Main container - Added padding-bottom
+    <div className={`min-h-screen flex flex-col items-center p-4 pb-16 relative ${submittedUrl === null ? 'justify-center' : '' // Only center vertically initially
       }`}>
-      {/* Render the background emojis first, so it's behind everything */}
       <BackgroundEmojis />
 
       {/* --- Header Area --- */}
-      {/* Ensure header content has z-index if needed, or rely on render order */}
-      <div className="w-full max-w-4xl flex flex-col items-center mb-6 relative z-0"> {/* z-0 ensures it's above background */}
-        {/* Only show the title when the input form is centered and visible */}
+      <div className="w-full max-w-4xl flex flex-col items-center mb-6 relative z-0">
+        {/* Title - Conditionally rendered */}
         {submittedUrl === null && (
           <h1 className="text-4xl font-bold text-dxh-primary mb-6 transition-opacity duration-300 ease-in-out">
             Restaurant Menu Summarizer
           </h1>
         )}
 
-        {/* Input Form - Always rendered, opacity changes */}
+        {/* Input Form - Conditional Opacity */}
         <div className={`w-full max-w-lg transition-opacity duration-300 ease-in-out ${submittedUrl === null ? 'opacity-100' : 'opacity-0 pointer-events-none'
           }`}>
           <UrlInput onSubmit={handleSummarize} isLoading={isLoading} isCentered={true} />
         </div>
-
-        {/* Pill - Always rendered, opacity changes, fixed position */}
-        <div className={`fixed top-6 left-1/2 -translate-x-1/2 z-10 w-full max-w-lg transition-opacity duration-300 ease-in-out ${submittedUrl !== null ? 'opacity-100' : 'opacity-0 pointer-events-none'
-          }`}>
-          {submittedUrl && <SubmittedUrlPill url={submittedUrl} onClear={handleClearUrl} isLoading={isLoading} />}
-        </div>
+        {/* Pill wrapper moved to the end */}
       </div>
 
       {/* --- Content Area (Errors or Results) --- */}
-      {/* Ensure content area is above background */}
-      <div className={`w-full max-w-6xl transition-opacity duration-500 ease-in-out relative z-0 ${submittedUrl !== null ? 'mt-32 opacity-100' : 'opacity-0 pointer-events-none'}`}>
+      {/* Reduced margin-top from mt-32 to mt-20 */}
+      <div className={`w-full max-w-6xl mx-auto transition-opacity duration-500 ease-in-out relative z-0 ${submittedUrl !== null ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}> {/* Changed mt-32 to mt-10 */}
         {isLoading && (
           <div className="flex justify-center items-center p-10">
-            <svg className="animate-spin h-10 w-10 text-dxh-primary" /* ... spinner path ... */ >
+            <svg className="animate-spin h-10 w-10 text-dxh-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
@@ -140,11 +133,18 @@ function App() {
 
             {/* --- JSON Display (Conditional & Animated) --- */}
             <div className={`transition-all duration-500 ease-in-out w-full md:w-1/2 ${showJson ? 'opacity-100 translate-x-0 max-h-[1000px]' : 'opacity-0 -translate-x-4 max-h-0 md:hidden'}`}>
-              <JsonDisplay data={menuData} />
+              {showJson && <JsonDisplay data={menuData} />}
             </div>
           </div>
         )}
       </div> {/* End of Content Area */}
+
+      {/* --- Fixed Pill Rendered Last --- */}
+      <div className={`fixed top-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-lg transition-opacity duration-300 ease-in-out ${submittedUrl !== null ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}>
+        {submittedUrl && <SubmittedUrlPill url={submittedUrl} onClear={handleClearUrl} isLoading={isLoading} />}
+      </div>
+
     </div> // End of Main container
   );
 }
