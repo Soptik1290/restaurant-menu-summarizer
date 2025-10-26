@@ -1,12 +1,27 @@
-/* Hlavní CSS soubor aplikace s Tailwind CSS */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
-
-  /* Globální styly pro body element */
   body {
     @apply bg-zinc-900 text-gray-100 min-h-screen;
   }
+}
+
+/* Add this animation */
+@keyframes fly {
+  0% {
+    transform: translateY(0) translateX(0) rotate(0deg);
+  }
+
+  100% {
+    /* Move emojis up and slightly sideways, fade out */
+    transform: translateY(-100vh) translateX(20vw) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+/* Apply the animation to elements with the 'animate-fly' class */
+.animate-fly {
+  animation: fly linear infinite;
 }

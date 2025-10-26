@@ -1,4 +1,3 @@
-// client/src/components/JsonDisplay.tsx
 import React from 'react';
 import { MenuResponse } from '../types/menu'; // Importuj typ
 
