@@ -77,8 +77,7 @@ function App() {
       </div>
 
       {/* --- Oblast obsahu (chyby nebo výsledky) --- */}
-      <div className={`w-full max-w-2xl transition-opacity duration-500 ease-in-out ${submittedUrl !== null ? 'mt-32 opacity-100' : 'opacity-0 pointer-events-none'}`}>
-        {/* Indikátor načítání */}
+      <div className={`w-full max-w-2xl transition-opacity duration-500 ease-in-out ${submittedUrl !== null ? 'mt-32 opacity-100' : 'opacity-0 pointer-events-none'}`}>       {/* Indikátor načítání */}
         {isLoading && (
           <div className="flex justify-center items-center p-10">
             <svg className="animate-spin h-10 w-10 text-dxh-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -98,22 +97,30 @@ function App() {
 
         {/* Zobrazení dat menu (pokud existují a neprobíhá načítání) */}
         {menuData && !isLoading && (
-          <div className="p-6 bg-gray-800 rounded-lg shadow-md">
-            <h2 className="text-2xl font-semibold mb-4 text-center">{menuData.restaurant_name}</h2>
-            <p className="text-center text-gray-400 mb-6">Menu for {menuData.date}</p>
+          <div className="p-6 bg-zinc-800/80 backdrop-blur-lg border border-zinc-700 rounded-xl shadow-xl">
+            {/* Use brand color for the restaurant name */}
+            <h2 className="text-3xl font-bold mb-3 text-center text-dxh-primary">{menuData.restaurant_name}</h2>
+            <p className="text-center text-gray-400 mb-8">Menu for {menuData.date}</p>
 
             {menuData.daily_menu && menuData.menu_items.length > 0 ? (
-              <ul className="space-y-4">
+              // Use a simple list without extra background on ul
+              <ul className="space-y-3"> {/* Slightly reduced spacing */}
                 {menuData.menu_items.map((item, index) => (
-                  <li key={index} className="p-3 bg-gray-700 rounded shadow">
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="font-medium">{item.name}</span>
-                      <span className="text-lg font-semibold text-dxh-primary">{item.price},-</span>
+                  // Style list items with border and subtle background, rounded corners
+                  <li key={index} className="p-3 bg-zinc-700/50 border border-zinc-600 rounded-lg shadow-sm">
+                    {/* Item Name and Price */}
+                    <div className="flex justify-between items-start mb-1"> {/* Align items start */}
+                      <span className="font-semibold text-gray-100 mr-4">{item.name}</span> {/* Added margin-right */}
+                      {/* Price remains in brand color */}
+                      <span className="text-xl font-bold text-dxh-primary whitespace-nowrap">{item.price},-</span> {/* Added whitespace-nowrap */}
                     </div>
-                    <div className="text-sm text-gray-400 flex justify-between">
-                      <span>{item.category} {item.weight ? `(${item.weight})` : ''}</span>
+                    {/* Category, Weight, Allergens */}
+                    <div className="text-sm text-gray-400 flex justify-between items-center">
+                      {/* Combine category and weight */}
+                      <span className="capitalize">{item.category}{item.weight ? ` (${item.weight})` : ''}</span>
+                      {/* Allergens on the right */}
                       {item.allergens && item.allergens.length > 0 && (
-                        <span>Allergens: {item.allergens.join(', ')}</span>
+                        <span className="text-xs">Allergens: {item.allergens.join(', ')}</span>
                       )}
                     </div>
                   </li>
@@ -122,7 +129,8 @@ function App() {
             ) : (
               <p className="text-center text-gray-400">No daily menu found for today.</p>
             )}
-            <p className="text-xs text-gray-500 mt-4 text-center">
+            {/* Source link remains the same */}
+            <p className="text-xs text-gray-500 mt-6 text-center"> {/* Increased top margin */}
               Source: <a href={menuData.source_url} target="_blank" rel="noopener noreferrer" className="underline hover:text-dxh-primary">{menuData.source_url}</a>
             </p>
           </div>
