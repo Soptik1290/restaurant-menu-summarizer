@@ -8,20 +8,17 @@
   }
 }
 
-/* Add this animation */
 @keyframes fly {
   0% {
     transform: translateY(0) translateX(0) rotate(0deg);
   }
 
   100% {
-    /* Move emojis up and slightly sideways, fade out */
     transform: translateY(-100vh) translateX(20vw) rotate(360deg);
     opacity: 0;
   }
 }
 
-/* Apply the animation to elements with the 'animate-fly' class */
 .animate-fly {
   animation: fly linear infinite;
 }

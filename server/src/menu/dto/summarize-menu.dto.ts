@@ -1,13 +1,13 @@
 import { IsString, IsUrl } from 'class-validator';
 
 /**
- * DTO pro požadavek na sumarizaci menu
- * Validuje URL restaurace pro extrakci jídelního lístku
+ * DTO for menu summarization request
+ * Validates restaurant URL for menu extraction
  */
 export class SummarizeMenuDto {
   /**
-   * URL restaurace nebo jídelního lístku
-   * Musí být platná URL adresa
+   * Restaurant or menu URL
+   * Must be a valid URL address
    */
   @IsString()
   @IsUrl()

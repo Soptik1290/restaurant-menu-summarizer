@@ -3,8 +3,8 @@ import { MenuService } from './menu.service';
 import { MenuController } from './menu.controller';
 
 /**
- * Modul pro zpracování menu
- * Obsahuje controller a service pro extrakci a sumarizaci jídelních lístků
+ * Menu processing module
+ * Contains controller and service for menu extraction and summarization
  */
 @Module({
   controllers: [MenuController],

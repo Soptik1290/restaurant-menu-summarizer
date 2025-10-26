@@ -1,19 +1,19 @@
-# Docker Compose konfigurace pro Redis cache
-# Používá moderní verzi compose syntaxe
+# Docker Compose configuration for Redis cache
+# Uses modern compose syntax
 
 version: '3.8'
 
 services:
-  # Redis služba pro ukládání cache dat
+  # Redis service for storing cache data
   redis:
-    image: redis:latest # Oficiální Redis image z Docker Hub
-    container_name: restaurant-redis # Přátelský název kontejneru
+    image: redis:latest # Official Redis image from Docker Hub
+    container_name: restaurant-redis # Friendly container name
     ports:
-      - "6379:6379" # Mapování portu 6379 z hostitele do kontejneru
+      - "6379:6379" # Map port 6379 from host to container
     volumes:
-      - redis-data:/data # Persistentní úložiště pro cache data
+      - redis-data:/data # Persistent storage for cache data
 
-# Definice volume pro persistentní úložiště
-# Zajišťuje, že cache data přežijí restart kontejneru
+# Volume definition for persistent storage
+# Ensures cache data survives container restart
 volumes:
   redis-data:

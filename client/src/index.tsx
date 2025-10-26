@@ -4,18 +4,18 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 
-// Vytvoření root elementu pro React aplikaci
+// Create root element for React application
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );
 
-// Vykreslení aplikace s React StrictMode pro lepší vývoj
+// Render application with React StrictMode for better development
 root.render(
   <React.StrictMode>
     <App />
   </React.StrictMode>
 );
 
-// Spuštění měření výkonnosti aplikace
-// Pro produkci můžete předat funkci pro odeslání dat do analytics
+// Start application performance measurement
+// For production, you can pass a function to send data to analytics
 reportWebVitals();

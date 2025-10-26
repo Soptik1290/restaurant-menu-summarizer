@@ -3,24 +3,24 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 
 /**
- * Bootstrap funkce pro inicializaci NestJS aplikace
- * Konfiguruje CORS, validaci a spouští server na portu 3001
+ * Bootstrap function for NestJS application initialization
+ * Configures CORS, validation, and starts the server on port 3001
  */
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Povolení CORS pro cross-origin požadavky z frontendu
+  // Enable CORS for cross-origin requests from frontend
   app.enableCors();
 
-  // Globální validace pro všechny příchozí požadavky
-  // whitelist: true - odstraní neznámé vlastnosti z DTO
-  // transform: true - automaticky transformuje typy podle DTO definic
+  // Global validation for all incoming requests
+  // whitelist: true - removes unknown properties from DTOs
+  // transform: true - automatically transforms types according to DTO definitions
   app.useGlobalPipes(new ValidationPipe({
     whitelist: true,
     transform: true,
   }));
 
-  // Spuštění serveru na portu 3001
+  // Start the server on port 3001
   await app.listen(3001);
   console.log(`Nest application is listening on http://localhost:3001`);
 }

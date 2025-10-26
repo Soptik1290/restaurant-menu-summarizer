@@ -1,7 +1,7 @@
 {
   "name": "restaurant-menu-summarizer-server",
   "version": "1.0.0",
-  "description": "NestJS backend pro extrakci a sumarizaci jídelních lístků restaurací",
+  "description": "NestJS backend for restaurant menu extraction and summarization",
   "author": "Tomáš Stark, DiS.",
   "private": true,
   "license": "UNLICENSED",

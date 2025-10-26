@@ -7,27 +7,27 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { redisStore } from 'cache-manager-redis-yet';
 
 /**
- * Hlavní modul aplikace
- * Konfiguruje globální moduly pro konfiguraci, cache a importuje MenuModule
+ * Main application module
+ * Configures global modules for configuration, cache, and imports MenuModule
  */
 @Module({
   imports: [
-    // Globální konfigurační modul pro environment proměnné
+    // Global configuration module for environment variables
     ConfigModule.forRoot({
       isGlobal: true,
     }),
 
-    // Redis cache konfigurace s TTL 1 hodina
-    // Ukládá výsledky extrakce menu pro rychlejší opakované dotazy
+    // Redis cache configuration with 1 hour TTL
+    // Stores menu extraction results for faster repeated queries
     CacheModule.register({
       isGlobal: true,
       store: redisStore,
       host: 'localhost',
       port: 6379,
-      ttl: 3600 * 1000, // 1 hodina v milisekundách
+      ttl: 3600 * 1000, // 1 hour in milliseconds
     }),
 
-    // Modul pro zpracování menu
+    // Module for menu processing
     MenuModule,
   ],
   controllers: [AppController],

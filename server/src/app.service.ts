@@ -1,14 +1,14 @@
 import { Injectable } from '@nestjs/common';
 
 /**
- * Hlavní service aplikace
- * Obsahuje základní business logiku pro health check
+ * Main application service
+ * Contains basic business logic for health check
  */
 @Injectable()
 export class AppService {
   /**
-   * Vrací pozdrav pro health check
-   * @returns Ahoj zpráva
+   * Returns greeting for health check
+   * @returns Hello message
    */
   getHello(): string {
     return 'Hello World!';

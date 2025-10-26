@@ -2,8 +2,8 @@ import { Controller, Get } from '@nestjs/common';
 import { AppService } from './app.service';
 
 /**
- * Hlavní controller aplikace
- * Obsahuje základní endpointy pro health check a testování
+ * Main application controller
+ * Contains basic endpoints for health check and testing
  */
 @Controller()
 export class AppController {
@@ -11,7 +11,7 @@ export class AppController {
 
   /**
    * Health check endpoint
-   * @returns Ahoj zpráva pro ověření, že server běží
+   * @returns Hello message to verify the server is running
    */
   @Get()
   getHello(): string {

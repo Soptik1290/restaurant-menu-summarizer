@@ -1,4 +1,3 @@
-// client/src/App.tsx
 import React, { useState } from 'react';
 import axios from 'axios';
 import UrlInput from './components/UrlInput';
@@ -47,31 +46,22 @@ function App() {
   };
 
   return (
-    // Main container - Added padding-bottom
-    <div className={`min-h-screen flex flex-col items-center p-4 pb-16 relative ${submittedUrl === null ? 'justify-center' : '' // Only center vertically initially
-      }`}>
+    <div className={`min-h-screen flex flex-col items-center p-4 pb-16 relative ${submittedUrl === null ? 'justify-center' : ''}`}>
       <BackgroundEmojis />
 
-      {/* --- Header Area --- */}
       <div className="w-full max-w-4xl flex flex-col items-center mb-6 relative z-0">
-        {/* Title - Conditionally rendered */}
         {submittedUrl === null && (
           <h1 className="text-4xl font-bold text-dxh-primary mb-6 transition-opacity duration-300 ease-in-out">
             Restaurant Menu Summarizer
           </h1>
         )}
 
-        {/* Input Form - Conditional Opacity */}
-        <div className={`w-full max-w-lg transition-opacity duration-300 ease-in-out ${submittedUrl === null ? 'opacity-100' : 'opacity-0 pointer-events-none'
-          }`}>
+        <div className={`w-full max-w-lg transition-opacity duration-300 ease-in-out ${submittedUrl === null ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
           <UrlInput onSubmit={handleSummarize} isLoading={isLoading} isCentered={true} />
         </div>
-        {/* Pill wrapper moved to the end */}
       </div>
 
-      {/* --- Content Area (Errors or Results) --- */}
-      {/* Reduced margin-top from mt-32 to mt-20 */}
-      <div className={`w-full max-w-6xl mx-auto transition-opacity duration-500 ease-in-out relative z-0 ${submittedUrl !== null ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}> {/* Changed mt-32 to mt-10 */}
+      <div className={`w-full max-w-6xl mx-auto transition-opacity duration-500 ease-in-out relative z-0 ${submittedUrl !== null ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
         {isLoading && (
           <div className="flex justify-center items-center p-10">
             <svg className="animate-spin h-10 w-10 text-dxh-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -88,11 +78,9 @@ function App() {
           </div>
         )}
 
-        {/* --- Results Wrapper (Menu + JSON) --- */}
         {menuData && !isLoading && (
           <div className="flex flex-col md:flex-row md:space-x-6 space-y-6 md:space-y-0 items-start justify-center">
 
-            {/* --- Menu Display --- */}
             <div className={`p-6 bg-zinc-800/80 backdrop-blur-lg border border-zinc-700 rounded-xl shadow-xl w-full transition-all duration-500 ease-in-out ${showJson ? 'md:w-1/2' : 'md:w-2/3 lg:w-1/2'}`}>
               <h2 className="text-3xl font-bold mb-3 text-center text-dxh-primary">{menuData.restaurant_name}</h2>
               <p className="text-center text-gray-400 mb-8">Menu for {menuData.date}</p>
@@ -120,7 +108,6 @@ function App() {
               <p className="text-xs text-gray-500 mt-6 text-center">
                 Source: <a href={menuData.source_url} target="_blank" rel="noopener noreferrer" className="underline hover:text-dxh-primary">{menuData.source_url}</a>
               </p>
-              {/* Show/Hide JSON Button */}
               <div className="text-center mt-6">
                 <button
                   onClick={toggleShowJson}
@@ -131,21 +118,18 @@ function App() {
               </div>
             </div>
 
-            {/* --- JSON Display (Conditional & Animated) --- */}
             <div className={`transition-all duration-500 ease-in-out w-full md:w-1/2 ${showJson ? 'opacity-100 translate-x-0 max-h-[1000px]' : 'opacity-0 -translate-x-4 max-h-0 md:hidden'}`}>
               {showJson && <JsonDisplay data={menuData} />}
             </div>
           </div>
         )}
-      </div> {/* End of Content Area */}
+      </div>
 
-      {/* --- Fixed Pill Rendered Last --- */}
-      <div className={`fixed top-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-lg transition-opacity duration-300 ease-in-out ${submittedUrl !== null ? 'opacity-100' : 'opacity-0 pointer-events-none'
-        }`}>
+      <div className={`fixed top-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-lg transition-opacity duration-300 ease-in-out ${submittedUrl !== null ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
         {submittedUrl && <SubmittedUrlPill url={submittedUrl} onClear={handleClearUrl} isLoading={isLoading} />}
       </div>
 
-    </div> // End of Main container
+    </div>
   );
 }
 

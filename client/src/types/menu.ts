@@ -1,31 +1,31 @@
 /**
- * Interface pro položku jídelního lístku
+ * Interface for a menu item
  */
 export interface MenuItem {
-    /** Kategorie jídla (např. "polévka", "hlavní jídlo", "dezert") */
+    /** Food category (e.g., "polévka", "hlavní jídlo", "dezert") */
     category: string;
-    /** Název jídla */
+    /** Item name */
     name: string;
-    /** Cena v korunách */
+    /** Price in CZK */
     price: number;
-    /** Seznam alergenů (volitelné) */
+    /** List of allergens (optional) */
     allergens?: string[];
-    /** Hmotnost porce (volitelné) */
+    /** Portion weight (optional) */
     weight?: string | null;
 }
 
 /**
- * Interface pro odpověď API s daty menu
+ * Interface for API response with menu data
  */
 export interface MenuResponse {
-    /** Název restaurace */
+    /** Restaurant name */
     restaurant_name: string;
-    /** Seznam položek menu */
+    /** List of menu items */
     menu_items: MenuItem[];
-    /** Zda byl nalezen denní lístek */
+    /** Whether a daily menu was found */
     daily_menu: boolean;
-    /** Datum pro které je menu */
+    /** Date for which the menu is available */
     date: string;
-    /** URL zdroje menu */
+    /** URL source of the menu */
     source_url: string;
 }
