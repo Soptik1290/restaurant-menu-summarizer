@@ -4,14 +4,15 @@ import { SummarizeMenuDto } from './dto/summarize-menu.dto';
 
 @Controller('menu')
 export class MenuController {
-  constructor(private readonly menuService: MenuService) {}
+  constructor(private readonly menuService: MenuService) { }
 
   /**
    * Extracts and summarizes menu from restaurant URL
-   * Supports HTML, images (OCR), and PDF content
+   * @param summarizeMenuDto DTO containing restaurant URL
+   * @returns Extracted and structured menu data
    */
   @Post('summarize')
-  @HttpCode(200) 
+  @HttpCode(200)
   async summarizeMenu(@Body() summarizeMenuDto: SummarizeMenuDto) {
     return this.menuService.summarize(summarizeMenuDto.url);
   }

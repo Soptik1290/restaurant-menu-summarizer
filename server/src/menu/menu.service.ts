@@ -126,6 +126,7 @@ export class MenuService {
 
       // Process based on Content-Type
       this.logger.log(`Content-Type detected: ${content.contentType}`);
+
       // Process HTML content with Cheerio
       if (content.contentType.includes('text/html')) {
         this.logger.log('Processing as HTML with Cheerio...');

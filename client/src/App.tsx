@@ -13,7 +13,7 @@ import { MenuResponse } from './types/menu';
 interface ApiError {
   statusCode: number;
   message: string;
-  error?: string; // e.g., "Not Found", "Bad Gateway"
+  error?: string;
 }
 
 /**
@@ -59,13 +59,12 @@ function App() {
   };
 
   /**
-   * Clears the submitted URL and resets all state
+   * Refreshes the current URL by calling handleSummarize again
    */
-  const handleClearUrl = () => {
-    setSubmittedUrl(null);
-    setMenuData(null);
-    setError(null);
-    setShowJson(false);
+  const handleRefresh = () => {
+    if (submittedUrl && !isLoading) {
+      handleSummarize(submittedUrl);
+    }
   };
 
   /**
@@ -143,7 +142,7 @@ function App() {
     <div className={`min-h-screen flex flex-col items-center p-4 pb-16 relative ${submittedUrl === null ? 'justify-center' : ''}`}>
       <BackgroundEmojis />
 
-      <div className="w-full max-w-4xl flex flex-col items-center mb-6 relative z-0">
+      <div className="w-full max-w-4xl flex flex-col items-center relative z-0">
         {submittedUrl === null && (
           <h1 className="text-4xl font-bold text-dxh-primary mb-6 transition-opacity duration-300 ease-in-out">
             Restaurant Menu Summarizer
@@ -155,7 +154,7 @@ function App() {
         </div>
       </div>
 
-      <div className={`w-full max-w-6xl mx-auto transition-opacity duration-500 ease-in-out relative z-0 ${submittedUrl !== null ? 'mt-24 opacity-100' : 'opacity-0 pointer-events-none'}`}>
+      <div className={`w-full max-w-6xl mx-auto transition-opacity duration-500 ease-in-out relative z-0 ${submittedUrl !== null ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
         {isLoading && (
           <div className="flex justify-center items-center p-10">
             <svg className="animate-spin h-10 w-10 text-dxh-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -177,7 +176,12 @@ function App() {
               {menuData.daily_menu && menuData.menu_items.length > 0 ? (
                 <ul className="space-y-3">
                   {menuData.menu_items.map((item, index) => (
-                    <li key={index} className="p-3 bg-zinc-700/50 border border-zinc-600 rounded-lg shadow-sm">
+                    <li
+                      key={index}
+                      className="p-3 bg-zinc-700/50 border border-zinc-600 rounded-lg shadow-sm
+                                  transition-all duration-200 ease-in-out
+                                  hover:bg-zinc-700/80 hover:scale-[1.02] hover:shadow-md"
+                    >
                       <div className="flex justify-between items-start mb-1">
                         <span className="font-semibold text-gray-100 mr-4">{item.name}</span>
                         <span className="text-xl font-bold text-dxh-primary whitespace-nowrap">{item.price},-</span>
@@ -210,7 +214,9 @@ function App() {
               </div>
             </div>
 
-            <div className={`transition-all duration-500 ease-in-out w-full md:w-1/2 ${showJson ? 'opacity-100 translate-x-0 max-h-[1000px]' : 'opacity-0 -translate-x-4 max-h-0 md:hidden'}`}>
+            <div className={`transition-all duration-500 ease-in-out overflow-hidden
+                            bg-zinc-900 border border-zinc-700 rounded-lg shadow-inner
+                            ${showJson ? 'max-w-full md:max-w-[50%] opacity-100 p-4' : 'max-w-0 opacity-0 p-0 border-0'}`}>
               {showJson && <JsonDisplay data={menuData} />}
             </div>
           </div>
@@ -218,7 +224,14 @@ function App() {
       </div>
 
       <div className={`fixed top-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-lg transition-opacity duration-300 ease-in-out ${submittedUrl !== null ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-        {submittedUrl && <SubmittedUrlPill url={submittedUrl} onClear={handleClearUrl} isLoading={isLoading} />}
+        {submittedUrl && (
+          <SubmittedUrlPill
+            url={submittedUrl}
+            onRefresh={handleRefresh}
+            onSubmitNew={handleSummarize}
+            isLoading={isLoading}
+          />
+        )}
       </div>
 
     </div>

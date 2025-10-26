@@ -7,37 +7,36 @@ from pydantic import BaseModel, HttpUrl
 from PIL import Image
 
 class ImageUrl(BaseModel):
-    """Pydantic model pro validaci URL v požadavcích"""
+    """Pydantic model for URL validation in requests"""
     url: HttpUrl 
 
-# Inicializace FastAPI aplikace
-app = FastAPI(title="OCR Service", description="Služba pro extrakci textu z obrázků a PDF souborů")
+app = FastAPI(title="OCR Service", description="Service for text extraction from images and PDF files")
 
 @app.post("/ocr")
 async def ocr_from_url(image_url: ImageUrl):
     """
-    Extrahuje text z obrázku pomocí OCR s podporou češtiny
+    Extracts text from image using OCR with Czech language support
     
     Args:
-        image_url: Objekt obsahující URL obrázku
+        image_url: Object containing image URL
         
     Returns:
-        dict: Slovník s extrahovaným textem
+        dict: Dictionary with extracted text
         
     Raises:
-        HTTPException: Při chybě stahování nebo zpracování obrázku
+        HTTPException: On download or processing error
     """
     try:
-        # Stáhnutí obrázku z URL
+        # Download image from URL
         async with httpx.AsyncClient() as client:
             response = await client.get(str(image_url.url))
             response.raise_for_status()
 
-        # Konverze na PIL Image objekt
+        # Convert to PIL Image object
         image_bytes = io.BytesIO(response.content)
         img = Image.open(image_bytes)
         
-        # OCR extrakce s českým jazykem
+        # OCR extraction with Czech language
         text = pytesseract.image_to_string(img, lang='ces')
         
         return {"text": text}
@@ -52,29 +51,29 @@ async def ocr_from_url(image_url: ImageUrl):
 @app.post("/pdf")
 async def pdf_from_url(pdf_url: ImageUrl):
     """
-    Extrahuje text z PDF souboru a vrací kombinovaný text ze všech stránek
+    Extracts text from PDF file and returns combined text from all pages
     
     Args:
-        pdf_url: Objekt obsahující URL PDF souboru
+        pdf_url: Object containing PDF file URL
         
     Returns:
-        dict: Slovník s extrahovaným textem ze všech stránek
+        dict: Dictionary with extracted text from all pages
         
     Raises:
-        HTTPException: Při chybě stahování nebo zpracování PDF
+        HTTPException: On download or processing error
     """
     try:
-        # Stáhnutí PDF souboru z URL
+        # Download PDF file from URL
         async with httpx.AsyncClient() as client:
             response = await client.get(str(pdf_url.url))
             response.raise_for_status()
 
-        # Zpracování PDF pomocí pdfplumber
+        # Process PDF using pdfplumber
         pdf_bytes = io.BytesIO(response.content)
         all_text = ""
         
         with pdfplumber.open(pdf_bytes) as pdf:
-            # Procházení všech stránek a extrakce textu
+            # Iterate through all pages and extract text
             for page in pdf.pages:
                 text = page.extract_text()
                 if text:
@@ -89,5 +88,5 @@ async def pdf_from_url(pdf_url: ImageUrl):
 
 if __name__ == "__main__":
     import uvicorn
-    # Spuštění serveru na všech síťových rozhraních portu 8000
+    # Start server on all network interfaces port 8000
     uvicorn.run(app, host="0.0.0.0", port=8000)
