@@ -24,8 +24,13 @@ This project fulfills the requirements of the DXH AI Developer technical task.
 
 ## Tech Stack
 
-- **Backend:** Node.js, NestJS, TypeScript - **OCR/PDF Service:** Python, FastAPI, Pytesseract, Pdfplumber - **Frontend:** React, TypeScript, Tailwind CSS (v3), Create React App (`react-scripts`) - **AI:** OpenAI API (GPT-5-mini) - **Caching:** Redis - **Containerization:** Docker, Docker Compose - **HTTP Client:** Axios
-- **HTML Parsing:** Cheerio - **Testing:** Jest (Unit & E2E), Supertest (E2E)
+- **Backend:** Node.js, NestJS, TypeScript
+- **OCR/PDF Service:** Python, FastAPI, Pytesseract, Pdfplumber
+- **Frontend:** React, TypeScript, Tailwind CSS (v3), Create React App (`react-scripts`)
+- **AI:** OpenAI API (GPT-5-mini) - **Caching:** Redis - **Containerization:** Docker, Docker Compose
+- **HTTP Client:** Axios
+- **HTML Parsing:** Cheerio
+- **Testing:** Jest (Unit & E2E), Supertest (E2E)
 
 ---
 
