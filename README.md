@@ -1,6 +1,6 @@
-# Restaurant Menu Summarizer (DXH AI Developer Task)
+# 🍽️ Restaurant Menu Summarizer (DXH AI Developer Task)
 
-## About The Project
+## 📖 About The Project
 
 This project is a web application designed to fetch, parse, and summarize the daily menu from a restaurant's website, image, or PDF URL. It uses an AI model (OpenAI) via tool calling to extract structured menu data and caches the results for efficiency. The application includes a NestJS backend, a Python microservice for OCR/PDF processing, and a React frontend.
 
@@ -8,7 +8,7 @@ This project fulfills the requirements of the DXH AI Developer technical task.
 
 ---
 
-## Features
+## 🚀 Features
 
 - **URL Input:** Accepts a URL for a restaurant's menu page.
 - **Content Fetching:** Retrieves content from the URL.
@@ -22,19 +22,35 @@ This project fulfills the requirements of the DXH AI Developer technical task.
 
 ---
 
-## Tech Stack
+## 📂 Project Structure
+
+```
+client/         # React frontend (TypeScript, Tailwind CSS)
+server/         # NestJS backend (TypeScript)
+ocr-service/    # Python microservice for OCR/PDF (FastAPI)
+docker-compose.yml
+package.json
+README.md
+.env            # OpenAI API key (not in repo)
+```
+
+---
+
+## 🛠️ Tech Stack
 
 - **Backend:** Node.js, NestJS, TypeScript
 - **OCR/PDF Service:** Python, FastAPI, Pytesseract, Pdfplumber
 - **Frontend:** React, TypeScript, Tailwind CSS (v3), Create React App (`react-scripts`)
-- **AI:** OpenAI API (GPT-5-mini) - **Caching:** Redis - **Containerization:** Docker, Docker Compose
+- **AI:** OpenAI API (GPT-5-mini)
+- **Caching:** Redis
+- **Containerization:** Docker, Docker Compose
 - **HTTP Client:** Axios
 - **HTML Parsing:** Cheerio
 - **Testing:** Jest (Unit & E2E), Supertest (E2E)
 
 ---
 
-## Setup & Prerequisites
+## ⚙️ Setup & Prerequisites
 
 1.  **Clone the repository:**
     ```bash
@@ -52,7 +68,7 @@ This project fulfills the requirements of the DXH AI Developer technical task.
 
 ---
 
-## Running the Application (Docker Compose - Recommended)
+## 🐳 Running the Application (Docker Compose - Recommended)
 
 This is the easiest way to run the entire application (Backend, Frontend, OCR/PDF Service, Redis).
 
@@ -72,7 +88,7 @@ To stop the application, press `Ctrl+C` in the terminal where `docker-compose up
 
 ---
 
-## Running Services Individually (Development)
+## 💻 Running Services Individually (Development)
 
 Alternatively, you can run each service in its own terminal:
 
@@ -110,7 +126,7 @@ Alternatively, you can run each service in its own terminal:
 
 ---
 
-## Running Tests
+## 🧪 Running Tests
 
 Tests are run within the `server` directory.
 
@@ -131,9 +147,9 @@ Tests are run within the `server` directory.
 
 ---
 
-## Design Considerations & Choices
+## 💡 Design Considerations & Choices
 
-- **Technology Choice:** The core technologies used in this project – **NestJS** with **TypeScript** for the backend , **React** with **TypeScript** and **Tailwind CSS** for the frontend , **Redis** for caching , **Docker Compose** for containerization , and **Jest** for testing [cite: 117] – were largely based on the recommendations provided in the task description . These represent modern and commonly used tools in web development.
+- **Technology Choice:** The core technologies used in this project – **NestJS** with **TypeScript** for the backend , **React** with **TypeScript** and **Tailwind CSS** for the frontend , **Redis** for caching , **Docker Compose** for containerization , and **Jest** for testing – were largely based on the recommendations provided in the task description . These represent modern and commonly used tools in web development.
 - **Learning Curve:** As I had limited to no prior experience with several of these specific frameworks and tools (particularly NestJS, React, Tailwind, and Unit/Integration testing), a significant part of the development process involved learning them. This was achieved by following tutorials, watching instructional videos, reading documentation, and utilizing AI assistance to understand concepts and troubleshoot implementation details. The resulting code reflects an effort to apply these newly learned concepts cleanly and functionally, rather than demonstrating deep expertise.
 - **Web Content Retrieval & Processing:** While the task allowed for LLM-based web fetching , directly fetching content using `axios` (Option A approach) proved more reliable and controllable, especially for handling non-HTML content. `cheerio` is used for basic HTML text extraction. Recognizing the real-world challenge of image/PDF menus , dedicated Python microservices using **FastAPI**, Tesseract (OCR), and Pdfplumber were added as bonus features to significantly increase the tool's real-world usability. This microservice architecture keeps the main backend focused.
 - **Caching Strategy:** A straightforward Redis cache was implemented as required , using a URL+Date key and a basic 1-hour TTL as a balance between freshness and reducing API calls.
@@ -143,15 +159,15 @@ Tests are run within the `server` directory.
 
 ---
 
-## Future Improvements / Discussion Points
+## 🔮 Future Improvements / Discussion Points
 
-### Planned Features (Roadmap)
+### 🗺️ Planned Features (Roadmap)
 
 - **Smart Menu Finder:** Automatically find a restaurant’s menu using only its name. The backend/AI would handle searching online sources.
 - **Nearby Daily Menus:** Display daily menus of nearby restaurants based on user geolocation.
 - **AI Meal Recommendations:** If no daily menu is found, have the AI suggest three recommended meals based on cuisine type, local popularity, and seasonal trends.
 
-### Other Potential Ideas
+### 💬 Other Potential Ideas
 
 - **Frontend E2E Tests:** Implement E2E tests for the React application using Cypress or Playwright.
 - **Prompt Refinement:** Further improve the AI prompt to handle even more complex or unusual menu structures.
@@ -165,7 +181,7 @@ Tests are run within the `server` directory.
   - User accounts for saving favorites.
   - Notifications for daily lunch updates.
 
-### Discussion Points
+### 🤔 Discussion Points
 
 - **AI Allergen Guessing:** While omitted for safety, the feasibility and reliability of AI predicting potential allergens based on dish names could be discussed.
 - **Tesseract Accuracy:** For OCR, Tesseract's accuracy can vary. Exploring alternative OCR services (cloud-based or other models) could be a future step if accuracy is insufficient.
