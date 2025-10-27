@@ -1,0 +1,46 @@
+# render.yaml - Defines services for Render Blueprint
+
+services:
+  # 1. Redis Service (Using Render's Managed Redis is recommended)
+  - type: redis
+    name: menu-cache # Name for the Redis instance
+    plan: free # Use the free tier (or choose another plan)
+    # No Dockerfile needed, Render manages this
+
+  # 2. OCR/PDF Service (Python/FastAPI)
+  - type: web # Render type for web services
+    name: restaurant-ocr # Service name (used for internal URL: http://restaurant-ocr:8000)
+    env: docker # Specify we are using Docker
+    dockerfilePath: ./ocr-service/Dockerfile # Path to the Dockerfile
+    dockerContext: ./ocr-service # Build context directory
+    plan: free # Or choose a paid plan
+    # Optional: Define health check endpoint if you have one in FastAPI
+    # healthCheckPath: /health
+    # Port is automatically detected from Dockerfile EXPOSE (8000)
+
+  # 3. Backend Service (NestJS)
+  - type: web
+    name: restaurant-server
+    env: docker
+    dockerfilePath: ./server/Dockerfile
+    dockerContext: ./server
+    plan: free
+    envVars: # Environment Variables
+      - key: OPENAI_API_KEY
+        sync: false # Set value manually in Render dashboard (more secure)
+      - key: REDIS_URL # Render automatically provides this for managed Redis
+        fromService: # Get value from another service in the blueprint
+          type: redis
+          name: menu-cache # Must match the name of the Redis service above
+          property: internalUrl # Use the internal connection URL
+    # Port is automatically detected from Dockerfile EXPOSE (3001)
+
+  # 4. Frontend Service (React/Nginx)
+  - type: web
+    name: restaurant-client
+    env: docker
+    dockerfilePath: ./client/Dockerfile
+    dockerContext: ./client
+    plan: free
+    # Port is automatically detected from Dockerfile EXPOSE (80)
+    # Render maps this to the public HTTPS URL
