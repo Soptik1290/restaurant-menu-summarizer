@@ -3,9 +3,9 @@ services:
   - type: redis
     name: menu-cache
     plan: free
-    # Corrected IP Allow List structure
+    # Corrected IP Allow List structure with 'source' key
     ipAllowList: # This is the list property
-      - cidr: 0.0.0.0/0 # The first item in the list starts with a dash
+      - source: 0.0.0.0/0 # Use 'source' instead of 'cidr'
         description: Allow All # Key-value pair within the list item
 
   # 2. OCR/PDF Service (Python/FastAPI)
