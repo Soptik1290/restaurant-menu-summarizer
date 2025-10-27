@@ -3,6 +3,7 @@ import { MenuService } from './menu.service';
 import { ConfigService } from '@nestjs/config';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import axios, { AxiosError } from 'axios';
+import { HttpException, HttpStatus } from '@nestjs/common';
 
 
 jest.mock('axios');
@@ -68,5 +69,33 @@ describe('MenuService', () => {
         expect(mockCacheSet).toHaveBeenCalled();
     });
     // == END OF TEST 1 =======================================================
+
+    console.log('\n---\n');
+
+    // ========================================================================
+    // == UNIT TEST 2: 404 Error on Fetch (Basic) ========================
+    // ========================================================================
+    it('should throw an HttpException when the URL fetch fails (basic)', async () => {
+        // Arrange: Setup mock error
+        mockCacheGet.mockResolvedValue(null);
+        const mockError = { // Simulate Axios 404 error
+            isAxiosError: true,
+            response: { status: 404 },
+            message: 'Not Found',
+        } as AxiosError;
+        mockedAxios.get.mockRejectedValue(mockError);
+
+        // Act & Assert: Expect the summarize function to fail
+        await expect(service.summarize('http://invalid.com'))
+            .rejects.toThrow(HttpException);
+
+        // Assert: Verify the thrown error has the correct status code
+        await expect(service.summarize('http://invalid.com'))
+            .rejects.toHaveProperty('status', HttpStatus.BAD_GATEWAY);
+
+        // Assert: Verify cache was not updated
+        expect(mockCacheSet).not.toHaveBeenCalled();
+    });
+    // == END OF TEST 2 =======================================================
 
 }); 
