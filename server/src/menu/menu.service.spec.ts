@@ -3,8 +3,7 @@ import { MenuService } from './menu.service';
 import { ConfigService } from '@nestjs/config';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import axios, { AxiosError } from 'axios';
-import OpenAI from 'openai';
-import { HttpException, HttpStatus } from '@nestjs/common';
+
 
 jest.mock('axios');
 const mockedAxios = axios as jest.Mocked<typeof axios>;
