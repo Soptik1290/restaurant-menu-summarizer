@@ -1,15 +1,12 @@
-# render.yaml - Defines services for Render Blueprint
-
 services:
   # 1. Redis Service
   - type: redis
     name: menu-cache
     plan: free
-    # Add IP Allow List - Allow connections from anywhere (adjust if needed for security)
-    # Render's internal services should be able to connect.
-    ipAllowList:
-      - cidr: 0.0.0.0/0
-        description: Allow All # For simplicity, restrict later if needed
+    # Corrected IP Allow List structure
+    ipAllowList: # This is the list property
+      - cidr: 0.0.0.0/0 # The first item in the list starts with a dash
+        description: Allow All # Key-value pair within the list item
 
   # 2. OCR/PDF Service (Python/FastAPI)
   - type: web
@@ -18,7 +15,6 @@ services:
     dockerfilePath: ./ocr-service/Dockerfile
     dockerContext: ./ocr-service
     plan: free
-    # healthCheckPath: /health # Optional
 
   # 3. Backend Service (NestJS)
   - type: web
@@ -34,8 +30,7 @@ services:
         fromService:
           type: redis
           name: menu-cache
-          # Correct property name: use connectionString
-          property: connectionString # <-- ZMĚNA Z internalUrl
+          property: connectionString # Correct property name
 
   # 4. Frontend Service (React/Nginx)
   - type: web
