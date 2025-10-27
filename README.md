@@ -4,35 +4,28 @@
 
 This project is a web application designed to fetch, parse, and summarize the daily menu from a restaurant's website, image, or PDF URL. It uses an AI model (OpenAI) via tool calling to extract structured menu data and caches the results for efficiency. The application includes a NestJS backend, a Python microservice for OCR/PDF processing, and a React frontend.
 
-[cite_start]This project fulfills the requirements of the DXH AI Developer technical task[cite: 1].
+This project fulfills the requirements of the DXH AI Developer technical task.
 
 ---
 
 ## Features
 
-- [cite_start]**URL Input:** Accepts a URL for a restaurant's menu page[cite: 6].
-- [cite_start]**Content Fetching:** Retrieves content from the URL[cite: 7].
-- [cite_start]**Format Handling:** Supports HTML pages, image files (PNG, JPG, etc.), and PDF files[cite: 132].
-- [cite_start]**AI Extraction:** Uses OpenAI (GPT-4o/GPT-5-mini) with Tool Calling to extract menu items (name, price, category, allergens, weight) and restaurant name into a structured JSON format [cite: 8, 16-33, 48].
-- [cite_start]**Daily Menu Focus:** Attempts to identify the menu specifically for the current day, handling weekly and weekend menus[cite: 3, 133].
-- [cite_start]**Error Handling:** Provides user feedback for various issues like invalid URLs, fetch errors (404, timeout), unsupported content types, or missing menus[cite: 99, 131, 133].
-- [cite_start]**Caching:** Caches successfully extracted menus (keyed by URL + Date) in Redis to reduce API calls and improve response time [cite: 9, 64-71]. Cache TTL is set to 1 hour.
-- [cite_start]**Interactive Frontend:** Simple React interface with dark mode, frosted glass effects, animated background, and interactive elements[cite: 61, 89].
-- [cite_start]**Dockerized:** All services (Backend, Frontend, OCR/PDF, Redis) are containerized using Docker and Docker Compose for easy setup and deployment[cite: 87].
+- **URL Input:** Accepts a URL for a restaurant's menu page.
+- **Content Fetching:** Retrieves content from the URL.
+- **Format Handling:** Supports HTML pages, image files (PNG, JPG, etc.), and PDF files.
+- **AI Extraction:** Uses OpenAI (GPT-4o/GPT-5-mini) with Tool Calling to extract menu items (name, price, category, allergens, weight) and restaurant name into a structured JSON format .
+- **Daily Menu Focus:** Attempts to identify the menu specifically for the current day, handling weekly and weekend menus.
+- **Error Handling:** Provides user feedback for various issues like invalid URLs, fetch errors (404, timeout), unsupported content types, or missing menus.
+- **Caching:** Caches successfully extracted menus (keyed by URL + Date) in Redis to reduce API calls and improve response time . Cache TTL is set to 1 hour.
+- **Interactive Frontend:** Simple React interface with dark mode, frosted glass effects, animated background, and interactive elements.
+- **Dockerized:** All services (Backend, Frontend, OCR/PDF, Redis) are containerized using Docker and Docker Compose for easy setup and deployment.
 
 ---
 
 ## Tech Stack
 
-- [cite_start]**Backend:** Node.js, NestJS, TypeScript [cite: 114, 116]
-- [cite_start]**OCR/PDF Service:** Python, FastAPI, Pytesseract, Pdfplumber [cite: 125]
-- [cite_start]**Frontend:** React, TypeScript, Tailwind CSS (v3), Create React App (`react-scripts`) [cite: 120, 121, 122]
-- [cite_start]**AI:** OpenAI API (GPT-5-mini) [cite: 46]
-- [cite_start]**Caching:** Redis [cite: 68]
-- [cite_start]**Containerization:** Docker, Docker Compose [cite: 87]
-- **HTTP Client:** Axios
-- [cite_start]**HTML Parsing:** Cheerio [cite: 41]
-- [cite_start]**Testing:** Jest (Unit & E2E)[cite: 73, 117], Supertest (E2E)
+- **Backend:** Node.js, NestJS, TypeScript - **OCR/PDF Service:** Python, FastAPI, Pytesseract, Pdfplumber - **Frontend:** React, TypeScript, Tailwind CSS (v3), Create React App (`react-scripts`) - **AI:** OpenAI API (GPT-5-mini) - **Caching:** Redis - **Containerization:** Docker, Docker Compose - **HTTP Client:** Axios
+- **HTML Parsing:** Cheerio - **Testing:** Jest (Unit & E2E), Supertest (E2E)
 
 ---
 
@@ -135,13 +128,13 @@ Tests are run within the `server` directory.
 
 ## Design Considerations & Choices
 
-- **Technology Choice:** The core technologies used in this project – **NestJS** with **TypeScript** for the backend [cite: 114, 116][cite_start], **React** with **TypeScript** and **Tailwind CSS** for the frontend [cite: 120, 121, 122][cite_start], **Redis** for caching [cite: 68][cite_start], **Docker Compose** for containerization [cite: 87][cite_start], and **Jest** for testing [cite: 117] [cite_start]– were largely based on the recommendations provided in the task description [cite: 112-123]. These represent modern and commonly used tools in web development.
+- **Technology Choice:** The core technologies used in this project – **NestJS** with **TypeScript** for the backend , **React** with **TypeScript** and **Tailwind CSS** for the frontend , **Redis** for caching , **Docker Compose** for containerization , and **Jest** for testing [cite: 117] – were largely based on the recommendations provided in the task description . These represent modern and commonly used tools in web development.
 - **Learning Curve:** As I had limited to no prior experience with several of these specific frameworks and tools (particularly NestJS, React, Tailwind, and Unit/Integration testing), a significant part of the development process involved learning them. This was achieved by following tutorials, watching instructional videos, reading documentation, and utilizing AI assistance to understand concepts and troubleshoot implementation details. The resulting code reflects an effort to apply these newly learned concepts cleanly and functionally, rather than demonstrating deep expertise.
-- [cite_start]**Web Content Retrieval & Processing:** While the task allowed for LLM-based web fetching [cite: 43][cite_start], directly fetching content using `axios` (Option A approach) [cite: 41] proved more reliable and controllable, especially for handling non-HTML content. [cite_start]`cheerio` is used for basic HTML text extraction[cite: 41]. [cite_start]Recognizing the real-world challenge of image/PDF menus [cite: 132][cite_start], dedicated Python microservices using **FastAPI**[cite: 125], Tesseract (OCR), and Pdfplumber were added as bonus features to significantly increase the tool's real-world usability. This microservice architecture keeps the main backend focused.
-- [cite_start]**Caching Strategy:** A straightforward Redis cache was implemented as required [cite: 68][cite_start], using a URL+Date key [cite: 69] [cite_start]and a basic 1-hour TTL [cite: 70] [cite_start]as a balance between freshness and reducing API calls[cite: 66].
-- [cite_start]**Error Handling:** Implemented specific error handling for common issues (fetch failures [cite: 131][cite_start], unsupported types [cite: 132][cite_start], AI failures [cite: 99][cite_start]) and providing clearer feedback on the frontend, moving beyond generic error messages as discussed in the edge cases [cite: 131-138]. [cite_start]The AI prompt was also refined to detect "closed" statuses[cite: 136].
-- [cite_start]**AI Implementation:** OpenAI API was used [cite: 46] [cite_start]with **Tool Calling** [cite: 48] [cite_start]to enforce the required structured JSON output [cite: 16-33, 47, 97]. [cite_start]The prompt was iteratively refined in Czech to handle specific cases like weekly/weekend menus [cite: 133] and detecting closed restaurants, which required experimentation.
-- [cite_start]**Simplicity vs. Completeness:** While aiming to fulfill the core task and important edge cases (images, PDFs, weekend menus), features like advanced AI-based allergen guessing [cite: 90] were omitted due to potential inaccuracy and safety concerns. [cite_start]The focus was on delivering a robust core functionality cleanly[cite: 109].
+- **Web Content Retrieval & Processing:** While the task allowed for LLM-based web fetching , directly fetching content using `axios` (Option A approach) proved more reliable and controllable, especially for handling non-HTML content. `cheerio` is used for basic HTML text extraction. Recognizing the real-world challenge of image/PDF menus , dedicated Python microservices using **FastAPI**, Tesseract (OCR), and Pdfplumber were added as bonus features to significantly increase the tool's real-world usability. This microservice architecture keeps the main backend focused.
+- **Caching Strategy:** A straightforward Redis cache was implemented as required , using a URL+Date key and a basic 1-hour TTL as a balance between freshness and reducing API calls.
+- **Error Handling:** Implemented specific error handling for common issues (fetch failures , unsupported types , AI failures ) and providing clearer feedback on the frontend, moving beyond generic error messages as discussed in the edge cases . The AI prompt was also refined to detect "closed" statuses.
+- **AI Implementation:** OpenAI API was used with **Tool Calling** to enforce the required structured JSON output . The prompt was iteratively refined in Czech to handle specific cases like weekly/weekend menus and detecting closed restaurants, which required experimentation.
+- **Simplicity vs. Completeness:** While aiming to fulfill the core task and important edge cases (images, PDFs, weekend menus), features like advanced AI-based allergen guessing were omitted due to potential inaccuracy and safety concerns. The focus was on delivering a robust core functionality cleanly.
 
 ---
 
@@ -155,12 +148,12 @@ Tests are run within the `server` directory.
 
 ### Other Potential Ideas
 
-- [cite_start]**Frontend E2E Tests:** Implement E2E tests for the React application using Cypress or Playwright[cite: 77].
+- **Frontend E2E Tests:** Implement E2E tests for the React application using Cypress or Playwright.
 - **Prompt Refinement:** Further improve the AI prompt to handle even more complex or unusual menu structures.
-- [cite_start]**Cache Invalidation:** Implement more sophisticated cache invalidation (e.g., webhook on menu change, shorter TTL around lunchtime)[cite: 137].
-- [cite_start]**Deployment:** Finalize Docker configuration and deploy the application to Render or a similar platform[cite: 87].
+- **Cache Invalidation:** Implement more sophisticated cache invalidation (e.g., webhook on menu change, shorter TTL around lunchtime).
+- **Deployment:** Finalize Docker configuration and deploy the application to Render or a similar platform.
 - **UI/UX Polish:** Further refine UI details, animations, and potentially add loading skeletons.
-- [cite_start]**Authentication:** Add simple API key or JWT authentication as suggested[cite: 88].
+- **Authentication:** Add simple API key or JWT authentication as suggested.
 - **Advanced Features (From ROADMAP):**
   - Integration with Google Maps for visualization.
   - Filters by cuisine type or dietary preferences (could tie into AI analysis).
@@ -169,6 +162,6 @@ Tests are run within the `server` directory.
 
 ### Discussion Points
 
-- [cite_start]**AI Allergen Guessing:** While omitted for safety[cite: 90], the feasibility and reliability of AI predicting potential allergens based on dish names could be discussed.
+- **AI Allergen Guessing:** While omitted for safety, the feasibility and reliability of AI predicting potential allergens based on dish names could be discussed.
 - **Tesseract Accuracy:** For OCR, Tesseract's accuracy can vary. Exploring alternative OCR services (cloud-based or other models) could be a future step if accuracy is insufficient.
 - **PDF Complexity:** Currently handles text extraction from PDFs. More complex PDFs with layered text or unusual formatting might require more advanced parsing techniques.
