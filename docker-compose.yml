@@ -1,19 +1,67 @@
-# Docker Compose configuration for Redis cache
-# Uses modern compose syntax
-
 version: '3.8'
 
 services:
-  # Redis service for storing cache data
-  redis:
-    image: redis:latest # Official Redis image from Docker Hub
-    container_name: restaurant-redis # Friendly container name
+  # 1. NestJS Backend Service
+  server:
+    build:
+      context: ./server # Path to the Dockerfile
+      dockerfile: Dockerfile
+    container_name: restaurant-server
+    restart: unless-stopped
     ports:
-      - "6379:6379" # Map port 6379 from host to container
-    volumes:
-      - redis-data:/data # Persistent storage for cache data
+      - "3001:3001" # Map host port 3001 to container port 3001
+    environment:
+      # Pass the OpenAI API key securely (will use .env file later)
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    depends_on:
+      - redis # Wait for redis to be ready (basic check)
+      - ocr # Wait for ocr service to be ready
+    networks:
+      - app-network # Connect to our custom network
 
-# Volume definition for persistent storage
-# Ensures cache data survives container restart
+  # 2. Python OCR/PDF Service
+  ocr:
+    build:
+      context: ./ocr-service
+      dockerfile: Dockerfile
+    container_name: restaurant-ocr
+    restart: unless-stopped
+    ports:
+      - "8000:8000" # Map host port 8000 to container port 8000
+    networks:
+      - app-network
+
+  # 3. React Frontend Service (served by Nginx)
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: restaurant-client
+    restart: unless-stopped
+    ports:
+      - "3000:80" # Map host port 3000 to Nginx's port 80 in container
+    depends_on:
+      - server # Client might need the server to be available
+    networks:
+      - app-network
+
+  # 4. Redis Service (as before, but connected to network)
+  redis:
+    image: redis:latest
+    container_name: restaurant-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - app-network
+
+# Define the volume for persistent Redis data
 volumes:
   redis-data:
+
+# Define a custom network for services to communicate
+networks:
+  app-network:
+    driver: bridge

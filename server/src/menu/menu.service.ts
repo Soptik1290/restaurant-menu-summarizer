@@ -134,7 +134,7 @@ export class MenuService {
 
       } else if (content.contentType.includes('image/')) {
         this.logger.log('Processing as Image with OCR Service...');
-        const ocrResponse = await axios.post('http://localhost:8000/ocr', { url: url }, { timeout: 15000 });
+        const ocrResponse = await axios.post('http://ocr:8000/ocr', { url: url }, { timeout: 15000 });
         textContent = ocrResponse.data.text;
         if (!textContent || textContent.trim().length < 10) {
           throw new HttpException('OCR service returned empty or very short text.', HttpStatus.UNPROCESSABLE_ENTITY);
@@ -143,7 +143,7 @@ export class MenuService {
 
       } else if (content.contentType.includes('application/pdf')) {
         this.logger.log('Processing as PDF with PDF Service...');
-        const pdfResponse = await axios.post('http://localhost:8000/pdf', { url: url }, { timeout: 15000 });
+        const pdfResponse = await axios.post('http://ocr:8000/ocr', { url: url }, { timeout: 15000 });
         textContent = pdfResponse.data.text;
         if (!textContent || textContent.trim().length < 10) {
           throw new HttpException('PDF service returned empty or very short text.', HttpStatus.UNPROCESSABLE_ENTITY);
