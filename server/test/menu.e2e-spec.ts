@@ -40,16 +40,13 @@ describe('MenuController (e2e)', () => {
     mockCacheSet.mockReset();
     mockCacheDel.mockReset();
 
-    console.log('--- Setting up Test Module ---');
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
-    console.log('--- Test Module Compiled ---');
 
     app = moduleFixture.createNestApplication();
     app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
     await app.init();
-    console.log('--- Nest Application Initialized ---');
 
     menuService = moduleFixture.get<MenuService>(MenuService);
     cacheManager = moduleFixture.get<Cache>(Cache);
@@ -57,7 +54,6 @@ describe('MenuController (e2e)', () => {
   });
 
   afterAll(async () => {
-    console.log('--- Closing Nest Application ---');
     await app.close();
   });
 
@@ -74,7 +70,6 @@ describe('MenuController (e2e)', () => {
     // Create spy for the 'set' method on the actual cacheManager instance
     cacheSetSpy = jest.spyOn(cacheManager, 'set').mockResolvedValue(undefined);
     cacheSetSpy.mockClear();
-    console.log('\n--- Running test case ---');
   });
 
   // Clear spies after each test
@@ -85,7 +80,6 @@ describe('MenuController (e2e)', () => {
 
   // --- Integration Test Case ---
   it('/menu/summarize (POST) - basic success case', async () => {
-    console.log('--- Arranging success test ---');
     const testUrl = 'http://fake-test.com/menu';
     const mockHtml = '<html><body>PÁTEK: Test Jídlo, 99 Kč</body></html>';
     // Important: 'arguments' must be a STRING containing valid JSON
@@ -112,17 +106,13 @@ describe('MenuController (e2e)', () => {
         }
       }]
     });
-    console.log('--- Mocks Arranged ---');
 
     // Act & Assert: Send HTTP request
-    console.log('--- Sending request ---');
     await request(app.getHttpServer())
       .post('/menu/summarize')
       .send({ url: testUrl })
       .expect(200)
       .expect((res) => {
-        // Log inside the response assertion
-        console.log('[TEST DEBUG] Response Body in expect:', JSON.stringify(res.body, null, 2));
         expect(res.body).toBeDefined();
         expect(res.body.restaurant_name).toEqual('E2E Test Rest');
         expect(res.body.daily_menu).toEqual(true);
@@ -131,25 +121,17 @@ describe('MenuController (e2e)', () => {
         expect(res.body.menu_items.length).toBeGreaterThan(0);
         expect(res.body.menu_items[0].name).toEqual('Test Jídlo');
       });
-    console.log('--- Request and main asserts finished ---');
 
     // Assert separately: Verify that our SPY on cacheManager.set was called
-    const setCalls = cacheSetSpy.mock.calls;
-    console.log('Actual calls to cacheManager.set:', JSON.stringify(setCalls));
     expect(cacheSetSpy).toHaveBeenCalled();
-    console.log('--- Test case finished ---');
   });
 
   // --- Invalid URL Test ---
   it('/menu/summarize (POST) - invalid URL format', async () => {
-     console.log('--- Arranging invalid URL test ---');
     return request(app.getHttpServer())
       .post('/menu/summarize')
       .send({ url: 'not-a-valid-url' })
-      .expect(400)
-      .then(() => {
-          console.log('--- Invalid URL test finished successfully ---');
-      });
+      .expect(400);
   });
 
 });
