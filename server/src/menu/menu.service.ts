@@ -94,7 +94,6 @@ export class MenuService {
     private configService: ConfigService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache
   ) {
-    // Initialize OpenAI client with API key from environment
     this.openai = new OpenAI({
       apiKey: this.configService.get<string>('OPENAI_API_KEY'),
     });
@@ -112,7 +111,6 @@ export class MenuService {
     const cacheKey = `menu:${today}:${url}`;
 
     try {
-      // Check cache first
       const cachedMenu = await this.cacheManager.get(cacheKey);
       if (cachedMenu) {
         this.logger.log(`CACHE HIT: Returning menu from cache for key: ${cacheKey}`);
@@ -120,25 +118,20 @@ export class MenuService {
       }
       this.logger.log(`CACHE MISS: Fetching menu from source for key: ${cacheKey}`);
 
-      // Fetch content and check its type
       const content = await this.fetchContent(url);
       let textContent: string;
 
-      // Process based on Content-Type
       this.logger.log(`Content-Type detected: ${content.contentType}`);
 
-      // Process HTML content with Cheerio
       if (content.contentType.includes('text/html')) {
         this.logger.log('Processing as HTML with Cheerio...');
         const $ = cheerio.load(content.data);
         textContent = $('body').text();
-        // Check for minimal text extraction
         if (!textContent || textContent.trim().length < 50) {
           this.logger.warn(`Extracted very little text from HTML for ${url}`);
         }
         this.logger.log('HTML content has been cleaned to plain text.');
 
-        // Process images with OCR service
       } else if (content.contentType.includes('image/')) {
         this.logger.log('Processing as Image with OCR Service...');
         const ocrResponse = await axios.post('http://localhost:8000/ocr', { url: url }, { timeout: 15000 });
@@ -148,7 +141,6 @@ export class MenuService {
         }
         this.logger.log('Successfully received text from OCR service.');
 
-        // Process PDF files with PDF service
       } else if (content.contentType.includes('application/pdf')) {
         this.logger.log('Processing as PDF with PDF Service...');
         const pdfResponse = await axios.post('http://localhost:8000/pdf', { url: url }, { timeout: 15000 });
@@ -159,19 +151,16 @@ export class MenuService {
         this.logger.log('Successfully received text from PDF service.');
 
       } else {
-        // Unsupported content type
         throw new HttpException(
           `Unsupported content type: ${content.contentType}. Only text/html, image/*, and application/pdf are supported.`,
           HttpStatus.UNSUPPORTED_MEDIA_TYPE
         );
       }
 
-      // Process with OpenAI
       this.logger.log('Sending extracted text to OpenAI...');
       const dayOfWeek = new Date().toLocaleDateString('cs-CZ', { weekday: 'long' });
       const dayOfWeekUpper = dayOfWeek.toUpperCase();
 
-      // System prompt with instructions for menu extraction including closed status detection
       const systemPrompt = `Jsi užitečný asistent, který extrahuje jídelní lístky z **obyčejného textu**.
                             Aktuální datum je ${today}. Dnes je ${dayOfWeek} (Česky: ${dayOfWeekUpper}).
 
@@ -189,7 +178,6 @@ export class MenuService {
                             Alergeny by měly být pole textových řetězců (stringů). Pokud nejsou uvedeny, vrať prázdné pole [].
                             Nevymýšlej si jídla ani ceny.`;
 
-      // Call OpenAI with extracted text
       const response = await this.openai.chat.completions.create({
         model: 'gpt-5-mini',
         messages: [
@@ -200,7 +188,6 @@ export class MenuService {
         tool_choice: { type: 'function', function: { name: 'save_menu_json' } },
       });
 
-      // Parse AI response
       const toolCalls = response.choices[0]?.message?.tool_calls;
       if (toolCalls && toolCalls[0] && toolCalls[0].type === 'function' && toolCalls[0].function.name === 'save_menu_json' && toolCalls[0].function.arguments) {
         this.logger.log('Successfully received structured JSON from AI.');
@@ -213,7 +200,6 @@ export class MenuService {
           throw new HttpException('AI returned data in an invalid JSON format.', HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-        // Cache the result and return
         const finalResult = { ...menuData, date: today, source_url: url };
         await this.cacheManager.set(cacheKey, finalResult);
         this.logger.log(`CACHE SET: Saved menu to cache for key: ${cacheKey}`);
@@ -224,30 +210,22 @@ export class MenuService {
       }
 
     } catch (error: any) {
-      // Clear cache on any error during processing
       await this.cacheManager.del(cacheKey);
       this.logger.error(`Failed during summarize for ${url}, cache cleared. Error: ${error.message}`, error.stack);
 
-      // Re-throw specific HttpException if it was already one of ours
       if (error instanceof HttpException) {
         throw error;
-      }
-      // Handle Axios errors when calling OCR/PDF service
-      else if (axios.isAxiosError(error)) {
+      } else if (axios.isAxiosError(error)) {
         if (error.code === 'ECONNABORTED' || error.response?.status === 504) {
           throw new HttpException('Request to OCR/PDF service timed out.', HttpStatus.GATEWAY_TIMEOUT);
         } else {
           this.logger.error(`Axios error calling sub-service: ${error.response?.status} ${error.message}`);
           throw new HttpException(`Failed to communicate with OCR/PDF processing service.`, HttpStatus.BAD_GATEWAY);
         }
-      }
-      // Handle potential errors from the OpenAI API call itself
-      else if (error instanceof OpenAI.APIError) {
+      } else if (error instanceof OpenAI.APIError) {
         this.logger.error(`OpenAI API Error: ${error.status} ${error.name} ${error.message}`);
         throw new HttpException(`AI processing failed: ${error.message}`, error.status || HttpStatus.INTERNAL_SERVER_ERROR);
-      }
-      // Generic internal server error for any other unexpected issues
-      else {
+      } else {
         throw new HttpException(
           `An unexpected processing error occurred: ${error.message}`,
           HttpStatus.INTERNAL_SERVER_ERROR
@@ -267,7 +245,6 @@ export class MenuService {
       const headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
       };
-      // Fetch with 10 second timeout
       const response = await axios.get(url, { headers, timeout: 10000 });
       const contentType = response.headers['content-type'] || 'unknown';
       this.logger.log(`Successfully fetched content from ${url}. Content-Type: ${contentType}. Status: ${response.status}`);
@@ -276,20 +253,14 @@ export class MenuService {
       this.logger.error(`Failed to fetch content from ${url}: ${error.message}`, error.stack);
       if (axios.isAxiosError(error)) {
         const axiosError = error as AxiosError;
-        // Handle 404 Not Found
         if (axiosError.response?.status === 404) {
           throw new HttpException(`Website link appears broken (Error 404 Not Found).`, HttpStatus.NOT_FOUND);
-        }
-        // Handle timeouts
-        else if (axiosError.code === 'ECONNABORTED' || axiosError.response?.status === 504) {
+        } else if (axiosError.code === 'ECONNABORTED' || axiosError.response?.status === 504) {
           throw new HttpException('The website took too long to respond (Timeout).', HttpStatus.GATEWAY_TIMEOUT);
-        }
-        // Handle other HTTP errors
-        else if (axiosError.response?.status) {
+        } else if (axiosError.response?.status) {
           throw new HttpException(`The website returned an error (Status ${axiosError.response.status}).`, HttpStatus.BAD_GATEWAY);
         }
       }
-      // Generic fetch error (DNS failure, network issue, etc.)
       throw new HttpException(
         `Failed to retrieve content from the URL. Please check the address and your connection.`,
         HttpStatus.BAD_GATEWAY

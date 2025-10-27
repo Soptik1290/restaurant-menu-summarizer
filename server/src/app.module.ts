@@ -12,22 +12,18 @@ import { redisStore } from 'cache-manager-redis-yet';
  */
 @Module({
   imports: [
-    // Global configuration module for environment variables
     ConfigModule.forRoot({
       isGlobal: true,
     }),
 
-    // Redis cache configuration with 1 hour TTL
-    // Stores menu extraction results for faster repeated queries
     CacheModule.register({
       isGlobal: true,
       store: redisStore,
       host: 'localhost',
       port: 6379,
-      ttl: 3600 * 1000, // 1 hour in milliseconds
+      ttl: 3600 * 1000,
     }),
 
-    // Module for menu processing
     MenuModule,
   ],
   controllers: [AppController],
