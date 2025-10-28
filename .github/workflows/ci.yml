@@ -1,0 +1,63 @@
+name: CI - Run Tests
+
+# Spusť toto workflow při každém pushi nebo pull requestu do 'main' větve
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  # Úloha pro testování backendu
+  test-backend:
+    name: Run Backend Unit & E2E Tests
+    runs-on: ubuntu-latest # Poběží na serveru GitHubu s Ubuntu
+
+    steps:
+      # Krok 1: Stáhne kód z tvého repositáře
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      # Krok 2: Nastaví Node.js (stejnou verzi jako v Dockerfile)
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # Krok 3: Nainstaluje závislosti pro server
+      - name: Install server dependencies
+        run: npm install --prefix server
+
+      # Krok 4: Spustí unit testy
+      - name: Run server unit tests
+        run: npm test --prefix server
+
+      # Krok 5: Spustí E2E testy
+      - name: Run server E2E tests
+        # Naše E2E testy nepotřebují běžící Redis ani Python,
+        # protože mockujeme cache i externí volání (axios, OpenAI).
+        run: npm run test:e2e --prefix server
+
+  # Úloha pro testování frontendu (jestli se dá sestavit)
+  test-frontend-build:
+    name: Test Frontend Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install client dependencies
+        run: npm install --prefix client
+
+      - name: Build client
+        # Tento příkaz selže, pokud má frontend chyby v TypeScriptu nebo buildu
+        run: npm run build --prefix client
+        env:
+          # Musíme poskytnout proměnnou, kterou build proces očekává
+          REACT_APP_API_URL: /api
