@@ -1,12 +1,13 @@
+# render.yaml - Defines services for Render Blueprint
+
 services:
   # 1. Redis Service
   - type: redis
     name: menu-cache
     plan: free
-    # Corrected IP Allow List structure with 'source' key
-    ipAllowList: # This is the list property
-      - source: 0.0.0.0/0 # Use 'source' instead of 'cidr'
-        description: Allow All # Key-value pair within the list item
+    ipAllowList:
+      - source: 0.0.0.0/0
+        description: Allow All
 
   # 2. OCR/PDF Service (Python/FastAPI)
   - type: web
@@ -30,7 +31,10 @@ services:
         fromService:
           type: redis
           name: menu-cache
-          property: connectionString # Correct property name
+          property: connectionString
+      # ---> ADD OCR SERVICE URL <---
+      - key: OCR_SERVICE_URL
+        value: http://restaurant-ocr:8000 # Internal URL for OCR service
 
   # 4. Frontend Service (React/Nginx)
   - type: web
@@ -39,3 +43,6 @@ services:
     dockerfilePath: ./client/Dockerfile
     dockerContext: ./client
     plan: free
+    build:
+      dockerBuildArgs:
+        REACT_APP_API_URL: http://restaurant-server:3001
