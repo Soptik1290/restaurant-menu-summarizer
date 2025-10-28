@@ -4,20 +4,24 @@ services:
   # 1. NestJS Backend Service
   server:
     build:
-      context: ./server # Path to the Dockerfile
+      context: ./server
       dockerfile: Dockerfile
     container_name: restaurant-server
     restart: unless-stopped
     ports:
-      - "3001:3001" # Map host port 3001 to container port 3001
+      # Mapuj port kontejneru 3001 POUZE na localhost port 3001 serveru
+      - "127.0.0.1:3001:3001"
     environment:
-      # Pass the OpenAI API key securely (will use .env file later)
+      # Proměnné se načtou z kořenového .env souboru
       - OPENAI_API_KEY=${OPENAI_API_KEY}
+      # Použij interní názvy služeb v Docker síti
+      - REDIS_URL=redis://redis:6379
+      - OCR_SERVICE_URL=http://ocr:8000
     depends_on:
-      - redis # Wait for redis to be ready (basic check)
-      - ocr # Wait for ocr service to be ready
+      - redis
+      - ocr
     networks:
-      - app-network # Connect to our custom network
+      - app-network
 
   # 2. Python OCR/PDF Service
   ocr:
@@ -27,7 +31,8 @@ services:
     container_name: restaurant-ocr
     restart: unless-stopped
     ports:
-      - "8000:8000" # Map host port 8000 to container port 8000
+      # Mapuj port kontejneru 8000 POUZE na localhost port 8000 serveru
+      - "127.0.0.1:8000:8000"
     networks:
       - app-network
 
@@ -39,19 +44,19 @@ services:
     container_name: restaurant-client
     restart: unless-stopped
     ports:
-      - "3000:80" # Map host port 3000 to Nginx's port 80 in container
-    depends_on:
-      - server # Client might need the server to be available
+      # Mapuj port 80 kontejneru POUZE na localhost port 8080 serveru
+      - "127.0.0.1:8080:80"
     networks:
       - app-network
 
-  # 4. Redis Service (as before, but connected to network)
+  # 4. Redis Service
   redis:
     image: redis:latest
     container_name: restaurant-redis
     restart: unless-stopped
     ports:
-      - "6379:6379"
+      # Mapuj port 6379 POUZE na localhost port 6379 serveru
+      - "127.0.0.1:6379:6379"
     volumes:
       - redis-data:/data
     networks:

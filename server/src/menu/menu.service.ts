@@ -1,4 +1,3 @@
-// server/src/menu/menu.service.ts
 import { Injectable, Logger, HttpException, HttpStatus, Inject } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config'; // Make sure this is imported
 import axios, { AxiosError } from 'axios';
@@ -193,7 +192,7 @@ Alergeny by měly být pole textových řetězců (stringů). Pokud nejsou uvede
 Nevymýšlej si jídla ani ceny.`;
 
       const response = await this.openai.chat.completions.create({
-        model: 'gpt-5-mini', // Your preferred model
+        model: 'gpt-5-mini', 
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: `Here is the CLEANED TEXT content from the restaurant website (first 20k chars): ${textContent.substring(0, 20000)}` },
