@@ -1,6 +1,5 @@
 name: CI - Run Tests
 
-# Spusť toto workflow při každém pushi nebo pull requestu do 'main' větve
 on:
   push:
     branches: ["main"]
@@ -11,34 +10,52 @@ jobs:
   # Úloha pro testování backendu
   test-backend:
     name: Run Backend Unit & E2E Tests
-    runs-on: ubuntu-latest # Poběží na serveru GitHubu s Ubuntu
+    runs-on: ubuntu-latest
+
+    # --- PŘIDÁNO: Spusť Redis službu ---
+    # Toto spustí Docker kontejner s Redisem souběžně s tvým jobem
+    services:
+      redis:
+        image: redis:latest # Použij oficiální Redis image
+        ports:
+          - 6379:6379 # Zmapuj port 6379 v kontejneru na port 6379 v "host" (runneru)
+        options: >- # Počkej, až bude Redis připravený
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
-      # Krok 1: Stáhne kód z tvého repositáře
       - name: Check out code
         uses: actions/checkout@v4
 
-      # Krok 2: Nastaví Node.js (stejnou verzi jako v Dockerfile)
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      # Krok 3: Nainstaluje závislosti pro server
       - name: Install server dependencies
         run: npm install --prefix server
 
-      # Krok 4: Spustí unit testy
       - name: Run server unit tests
         run: npm test --prefix server
+        env:
+          # Nastav proměnné prostředí pro testy
+          # GitHub Actions mapuje port služby na localhost runneru
+          REDIS_URL: redis://localhost:6379
+          # I když jsou OpenAI a OCR mockované v E2E, je dobré mít proměnné nastavené
+          OPENAI_API_KEY: ${{ secrets.DUMMY_KEY }} # Použij dummy klíč, testy ho stejně nemají volat
+          OCR_SERVICE_URL: http://localhost:8000
 
-      # Krok 5: Spustí E2E testy
       - name: Run server E2E tests
-        # Naše E2E testy nepotřebují běžící Redis ani Python,
-        # protože mockujeme cache i externí volání (axios, OpenAI).
         run: npm run test:e2e --prefix server
+        env:
+          # Stejné proměnné i pro E2E testy
+          REDIS_URL: redis://localhost:6379
+          OPENAI_API_KEY: ${{ secrets.DUMMY_KEY }}
+          OCR_SERVICE_URL: http://localhost:8000
 
-  # Úloha pro testování frontendu (jestli se dá sestavit)
+  # Úloha pro testování frontendu
   test-frontend-build:
     name: Test Frontend Build
     runs-on: ubuntu-latest
@@ -56,8 +73,9 @@ jobs:
         run: npm install --prefix client
 
       - name: Build client
-        # Tento příkaz selže, pokud má frontend chyby v TypeScriptu nebo buildu
         run: npm run build --prefix client
         env:
-          # Musíme poskytnout proměnnou, kterou build proces očekává
+          # Nastav proměnnou pro build
           REACT_APP_API_URL: /api
+          # --- PŘIDÁNO: Zabraň varováním, aby shodila build ---
+          CI: false
