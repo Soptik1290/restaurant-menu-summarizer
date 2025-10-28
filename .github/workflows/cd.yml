@@ -1,0 +1,120 @@
+# .github/workflows/cd.yml
+
+name: CD - Deploy to Hetzner
+
+# Spusť toto workflow POUZE při pushi do 'main' větve
+on:
+  push:
+    branches: ["main"]
+
+# Proměnné prostředí pro celé workflow
+env:
+  # Nahraď 'soptik1290' svým GitHub jménem (malými písmeny)
+  REGISTRY: ghcr.io
+  IMAGE_OWNER: soptik1290
+
+jobs:
+  # Job č. 1: Sestaví a nahraje všechny 3 image
+  build-and-push-images:
+    name: Build and Push Docker Images
+    runs-on: ubuntu-latest
+    # Potřebuje, aby CI testy prošly (pokud je máš ve stejném workflow nebo odděleně)
+    # Pro jednoduchost teď závislost vynecháme, ale v praxi by tu bylo 'needs: [test-backend, test-frontend-build]'
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry (GHCR)
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.GH_USER }}
+          password: ${{ secrets.GH_PAT }} # Použijeme Personal Access Token
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Sestav a nahraj Backend (server)
+      - name: Build and push Server image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./server
+          file: ./server/Dockerfile
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/restaurant-menu-summarizer/server:latest
+
+      # Sestav a nahraj OCR službu (ocr)
+      - name: Build and push OCR image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./ocr-service
+          file: ./ocr-service/Dockerfile
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/restaurant-menu-summarizer/ocr:latest
+
+      # Sestav a nahraj Frontend (client)
+      - name: Build and push Client image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./client
+          file: ./client/Dockerfile
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/restaurant-menu-summarizer/client:latest
+          # Předáme build argument, který jsme nastavili v client/Dockerfile
+          build-args: |
+            REACT_APP_API_URL=/api
+
+  # Job č. 2: Nasadí image na server (běží až po úspěšném 'build-and-push-images')
+  deploy-to-hetzner:
+    name: Deploy to Hetzner VPS
+    runs-on: ubuntu-latest
+    needs: build-and-push-images # Závislost na předchozím jobu
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4 # Stáhneme kód, abychom měli docker-compose.prod.yml
+
+      - name: Create .env file for deployment
+        # Vytvoří .env soubor, který pošleme na server
+        run: |
+          echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" > .env
+          echo "GH_USER=${{ secrets.GH_USER }}" >> .env
+          echo "GH_PAT=${{ secrets.GH_PAT }}" >> .env
+        shell: bash
+
+      - name: Copy files to server via SCP
+        # Zkopíruje produkční compose soubor a .env soubor na server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.HETZNER_SSH_HOST }}
+          username: ${{ secrets.HETZNER_SSH_USER }}
+          key: ${{ secrets.HETZNER_SSH_KEY }}
+          source: "docker-compose.prod.yml,.env" # Soubory k zkopírování
+          target: "/root/restaurant-menu-summarizer" # Cílová složka na serveru
+
+      - name: SSH into server and deploy
+        # Připojí se na server a spustí příkazy k nasazení
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.HETZNER_SSH_HOST }}
+          username: ${{ secrets.HETZNER_SSH_USER }}
+          key: ${{ secrets.HETZNER_SSH_KEY }}
+          script: |
+            # Přepni se do složky projektu
+            cd /root/restaurant-menu-summarizer
+
+            # Načti .env proměnné (pro přihlášení do GHCR)
+            export $(cat .env | xargs)
+
+            # Přihlas se do GitHub Container Registry
+            docker login ${{ env.REGISTRY }} -u $GH_USER -p $GH_PAT
+
+            # Stáhni nejnovější image definované v produkčním compose souboru
+            docker compose -f docker-compose.prod.yml pull
+
+            # Zastav a restartuj služby s novými imagemi
+            docker compose -f docker-compose.prod.yml up -d
+
+            # Uklid (smaž staré, nepoužívané image)
+            docker image prune -af

@@ -1,0 +1,60 @@
+# docker-compose.prod.yml
+# Tento soubor se bude používat na Hetzner serveru pro produkci
+# Místo 'build:' používá 'image:'
+
+version: '3.8'
+
+services:
+  server:
+    # Místo 'build:', říkáme Dockeru, ať si stáhne hotový image z GHCR
+    image: ghcr.io/soptik1290/restaurant-menu-summarizer/server:latest
+    container_name: restaurant-server
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3001:3001"
+    environment:
+      # Proměnné se načtou z .env souboru, který vytvoří GitHub Action
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - REDIS_URL=redis://redis:6379
+      - OCR_SERVICE_URL=http://ocr:8000
+    depends_on:
+      - redis
+      - ocr
+    networks:
+      - app-network
+
+  ocr:
+    image: ghcr.io/soptik1290/restaurant-menu-summarizer/ocr:latest
+    container_name: restaurant-ocr
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8000:8000"
+    networks:
+      - app-network
+
+  client:
+    image: ghcr.io/soptik1290/restaurant-menu-summarizer/client:latest
+    container_name: restaurant-client
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8080:80"
+    networks:
+      - app-network
+
+  redis:
+    image: redis:latest
+    container_name: restaurant-redis
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - app-network
+
+volumes:
+  redis-data:
+
+networks:
+  app-network:
+    driver: bridge
