@@ -28,12 +28,11 @@ function App() {
     setShowJson(false); // Hide JSON on new search
     setSubmittedUrl(url); // Update the displayed URL
 
-    // Use environment variable ONLY.
-    // It MUST be set either by .env (local) or build arg (Render/Docker).
+    // Use environment variable only: set via .env (local) or build args
     const apiUrl = process.env.REACT_APP_API_URL;
-    console.log(`Using API URL: ${apiUrl}`); // Log the API URL being used
+    console.log(`Using API URL: ${apiUrl}`);
 
-    // Added check to ensure apiUrl is defined before making the call
+    // Ensure apiUrl is defined before making the call
     if (!apiUrl) {
       console.error("CRITICAL: REACT_APP_API_URL is not defined! Check client/.env locally or Dockerfile build args.");
       setError({ statusCode: 500, message: "API URL configuration is missing in the frontend application."});
@@ -51,13 +50,13 @@ function App() {
       console.error("API Error:", err);
       if (axios.isAxiosError(err)) {
         const axiosError = err as AxiosError<ApiError>;
-        // Log the detailed Axios error
+        // Log detailed Axios error
         console.error("Axios Error Response:", axiosError.response?.data);
         console.error("Axios Error Status:", axiosError.response?.status);
-        // Prioritize backend error structure, fall back to message/status
+        // Prefer backend error structure; fallback to message/status
         setError(axiosError.response?.data || { statusCode: axiosError.response?.status || 500, message: axiosError.message });
       } else {
-         // Log non-Axios error
+        // Log non-Axios error
         console.error("Non-Axios Error:", err);
         setError({ statusCode: 500, message: err.message || 'An unknown error occurred' });
       }
@@ -66,10 +65,10 @@ function App() {
     }
   };
 
-  // Function to handle refreshing the CURRENTLY submitted URL
+  // Refresh the CURRENTLY submitted URL
   const handleRefresh = () => {
     if (submittedUrl && !isLoading) {
-      // Just call handleSummarize again with the same URL
+      // Reuse handleSummarize with the same URL
       handleSummarize(submittedUrl);
     }
   };
