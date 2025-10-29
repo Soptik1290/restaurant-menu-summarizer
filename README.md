@@ -18,7 +18,7 @@ This project fulfills all core requirements, mandatory tasks (caching, testing),
   - **HTML** pages (parsed with Cheerio)
   - **Images** (PNG, JPG, etc., processed by a Tesseract OCR microservice)
   - **PDF** files (processed by a Pdfplumber microservice)
-- **AI Extraction:** Uses OpenAI (GPT-4o/GPT-5-mini) with Tool Calling to extract structured JSON data (name, price, category, etc.).
+- **AI Extraction:** Uses OpenAI (GPT-5-mini) with Tool Calling to extract structured JSON data (name, price, category, etc.).
 - **Smart Date Handling:** Prompt is engineered to find the menu for the current day, including complex cases like "Weekend Menus" or pages with incorrect date formatting.
 - **Persistent Caching:** Caches successful results in **Redis** (keyed by URL + Date, 1-hour TTL) to reduce API calls and improve speed.
 - **Robust Error Handling:** Frontend displays user-friendly messages for 404s, timeouts, unsupported file types, or if the AI detects the restaurant is closed.
