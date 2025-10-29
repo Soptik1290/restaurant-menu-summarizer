@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import axios, { AxiosError } from 'axios'; // Import AxiosError
+import axios, { AxiosError } from 'axios';
 import UrlInput from './components/UrlInput';
 import SubmittedUrlPill from './components/SubmittedUrlPill';
 import JsonDisplay from './components/JsonDisplay';
 import BackgroundEmojis from './components/BackgroundEmojis';
-import { MenuResponse, MenuItem } from './types/menu'; // Ensure MenuItem is imported if used
+import { MenuResponse } from './types/menu'; 
 
 // Define a type for structured errors from backend
 interface ApiError {
