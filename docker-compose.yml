@@ -9,12 +9,12 @@ services:
     container_name: restaurant-server
     restart: unless-stopped
     ports:
-      # Mapuj port kontejneru 3001 POUZE na localhost port 3001 serveru
+      # Map container port 3001 ONLY to host localhost port 3001
       - "127.0.0.1:3001:3001"
     environment:
-      # Proměnné se načtou z kořenového .env souboru
+      # Variables are loaded from the root .env file
       - OPENAI_API_KEY=${OPENAI_API_KEY}
-      # Použij interní názvy služeb v Docker síti
+      # Use internal service names within the Docker network
       - REDIS_URL=redis://redis:6379
       - OCR_SERVICE_URL=http://ocr:8000
     depends_on:
@@ -31,7 +31,7 @@ services:
     container_name: restaurant-ocr
     restart: unless-stopped
     ports:
-      # Mapuj port kontejneru 8000 POUZE na localhost port 8000 serveru
+      # Map container port 8000 ONLY to host localhost port 8000
       - "127.0.0.1:8000:8000"
     networks:
       - app-network
@@ -44,7 +44,7 @@ services:
     container_name: restaurant-client
     restart: unless-stopped
     ports:
-      # Mapuj port 80 kontejneru POUZE na localhost port 8080 serveru
+      # Map container port 80 ONLY to host localhost port 8080
       - "127.0.0.1:8080:80"
     networks:
       - app-network
@@ -55,7 +55,7 @@ services:
     container_name: restaurant-redis
     restart: unless-stopped
     ports:
-      # Mapuj port 6379 POUZE na localhost port 6379 serveru
+      # Map port 6379 ONLY to host localhost port 6379
       - "127.0.0.1:6379:6379"
     volumes:
       - redis-data:/data

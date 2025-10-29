@@ -2,7 +2,7 @@
  * Interface for a menu item
  */
 export interface MenuItem {
-    /** Food category (e.g., "polévka", "hlavní jídlo", "dezert") */
+    /** Food category (e.g., "soup", "main course", "dessert") */
     category: string;
     /** Item name */
     name: string;

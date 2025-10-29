@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import App from './App';
 
 /**
- * Test pro ověření základního vykreslení aplikace
+ * Test to verify the basic rendering of the application
  */
 test('renders restaurant menu summarizer title', () => {
   render(<App />);

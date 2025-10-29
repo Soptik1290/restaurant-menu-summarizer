@@ -1,19 +1,19 @@
 # docker-compose.prod.yml
-# Tento soubor se bude používat na Hetzner serveru pro produkci
-# Místo 'build:' používá 'image:'
+# This file is used on the Hetzner server for production
+# Uses 'image:' instead of 'build:'
 
 version: '3.8'
 
 services:
   server:
-    # Místo 'build:', říkáme Dockeru, ať si stáhne hotový image z GHCR
+    # Use a pre-built image from GHCR instead of 'build:'
     image: ghcr.io/soptik1290/restaurant-menu-summarizer/server:latest
     container_name: restaurant-server
     restart: unless-stopped
     ports:
       - "127.0.0.1:3001:3001"
     environment:
-      # Proměnné se načtou z .env souboru, který vytvoří GitHub Action
+      # Variables are loaded from the .env file created by GitHub Actions
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - REDIS_URL=redis://redis:6379
       - OCR_SERVICE_URL=http://ocr:8000

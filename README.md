@@ -52,7 +52,7 @@ This project fulfills all core requirements, mandatory tasks (caching, testing),
 
 ---
 
-## ⚙️ Setup & Prerequisites (Pro Lokální Vývoj)
+## ⚙️ Setup & Prerequisites (For Local Development)
 
 1.  **Clone the repository:**
     ```bash
@@ -63,52 +63,52 @@ This project fulfills all core requirements, mandatory tasks (caching, testing),
 3.  **Install Node.js & npm:** Required for installing dependencies and running helper scripts.
 4.  **Install Python & pip:** Required for the OCR/PDF service dependencies.
 5.  **Install Tesseract:** The OCR engine needs to be installed locally _if you intend to run the Python service outside of Docker_. Follow instructions for your OS (e.g., from [UB Mannheim Tesseract](https://github.com/UB-Mannheim/tesseract/wiki)). Ensure it's added to your system PATH and include the Czech (`ces`) language pack.
-6.  **Create Root `.env` file:** Vytvoř `.env` v hlavní složce pro `docker-compose`:
+6.  **Create Root `.env` file:** Create a `.env` in the project root for `docker-compose`:
     ```dotenv
     OPENAI_API_KEY=sk-xxxxxxxx
     ```
-7.  **Create Server `.env` file:** Vytvoř `server/.env` pro `npm run start:dev`:
+7.  **Create Server `.env` file:** Create `server/.env` for `npm run start:dev`:
     ```dotenv
     OCR_SERVICE_URL=http://localhost:8000
     ```
-8.  **Create Client `.env` file:** Vytvoř `client/.env` pro `npm start`:
+8.  **Create Client `.env` file:** Create `client/.env` for `npm start`:
     ```dotenv
     REACT_APP_API_URL=http://localhost:3001
     ```
-    _(Všechny `.env` soubory jsou ignorovány souborem `.gitignore`)_
+    _(All `.env` files are ignored by `.gitignore`)_
 
 ---
 
 ## 💻 Running Locally (Development)
 
-Pro lokální vývoj doporučuji spouštět služby manuálně ve 4 terminálech pro nejlepší přehled a hot-reload:
+For local development, it’s recommended to run the services manually in 4 terminals for clarity and hot reload:
 
-1.  **Terminál 1 (Redis):**
+1.  **Terminal 1 (Redis):**
     ```bash
-    # V kořenové složce
+    # In the project root
     docker compose up redis
     ```
-2.  **Terminál 2 (OCR/PDF Service):**
+2.  **Terminal 2 (OCR/PDF Service):**
     ```bash
     cd ocr-service
-    # Aktivuj virtual environment
+    # Activate virtual environment
     source venv/Scripts/activate
-    # Spusť server
+    # Start the server
     uvicorn main:app --reload
     ```
-3.  **Terminál 3 (Backend Server):**
+3.  **Terminal 3 (Backend Server):**
     ```bash
     cd server
-    # Spusť server v dev módu
+    # Start the server in dev mode
     npm run start:dev
     ```
-4.  **Terminál 4 (Frontend Client):**
+4.  **Terminal 4 (Frontend Client):**
     ```bash
     cd client
-    # Spusť dev server
+    # Start the dev server
     npm start
     ```
-    - Aplikace poběží na `http://localhost:3000`.
+    - The app will be available at `http://localhost:3000`.
 
 ---
 
@@ -132,8 +132,8 @@ The live server uses Nginx as a reverse proxy (running on the host) to route tra
 ### Backend (Server)
 
 1.  Navigate to the server directory: `cd server`
-2.  **Run Unit Tests:** `npm test` (nebo `npm test menu.service.spec.ts`)
-3.  **Run Integration / E2E Tests:** `npm run test:e2e` (spustí `menu.e2e-spec.ts` a `cache.e2e-spec.ts`)
+2.  **Run Unit Tests:** `npm test` (or `npm test menu.service.spec.ts`)
+3.  **Run Integration / E2E Tests:** `npm run test:e2e` (runs `menu.e2e-spec.ts` and `cache.e2e-spec.ts`)
 
 ### Frontend (Client)
 

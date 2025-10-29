@@ -1,4 +1,3 @@
-// server/test/menu.e2e-spec.ts
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe, HttpException, HttpStatus } from '@nestjs/common';
 import request from 'supertest';
