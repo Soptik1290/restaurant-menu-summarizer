@@ -156,26 +156,41 @@ The live server uses Nginx as a reverse proxy (running on the host) to route tra
 
 ---
 
-## 🔮 Future Improvements / Discussion Points
+## 🔮 Future Improvements / Discussion
 
-### 🗺️ Planned Features (Roadmap)
+### 🗺️ Roadmap
 
-- **Smart Menu Finder:** Automatically find a restaurant’s menu using only its name. The backend/AI would handle searching online sources.
-- **Nearby Daily Menus:** Display daily menus of nearby restaurants based on user geolocation.
-- **AI Meal Recommendations:** If no daily menu is found, have the AI suggest three recommended meals based on cuisine type, local popularity, and seasonal trends.
+- **Smart menu finder by restaurant name:** Backend/AI automatically discovers the official site and menu URL.
+- **Nearby daily menus:** Show offers based on the user’s geolocation.
+- **AI meal recommendations:** If no daily menu is found, suggest 3 relevant dishes by cuisine, popularity, and season.
+- **Smarter cache invalidation:** Shorter TTL around lunchtime; manual admin invalidation.
+- **Authentication and rate limiting:** Simple API key or JWT; protect against abuse.
+- **Observability:** Structured logs, metrics, and tracing (e.g., OpenTelemetry) for `server` and `ocr-service`.
+- **OCR/PDF quality:** Language detection, deskew, binarization, better heuristics for table-like PDFs.
+- **I18n & accessibility:** EN/CZ UI, basic a11y (contrast, keyboard nav, ARIA roles).
 
-### 💬 Other Potential Ideas
+### 💡 Additional ideas
 
-- **Prompt Refinement:** Further improve the AI prompt to handle even more complex or unusual menu structures.
-- **Cache Invalidation:** Implement more sophisticated cache invalidation (e.g., shorter TTL around lunchtime).
-- **Authentication:** Add simple API key or JWT authentication as suggested.
-- **Advanced Features (From ROADMAP):**
-  - Integration with Google Maps for visualization.
-  - Filters by cuisine type or dietary preferences.
-  - User accounts for saving favorites.
-  - Notifications for daily lunch updates.
+- **Prompt refinement:** Handle unusual structures (weekend menus, multilingual pages, seasonal cards).
+- **Filters and personalization:** Cuisine, dietary preferences, price range.
+- **Favorites and notifications:** Save restaurants, notify about new daily menus.
+- **Maps integration:** Visualize venues and navigation (Google Maps / OpenStreetMap).
+- **History and comparison:** Archive daily menus and compare across restaurants.
 
-### 🤔 Discussion Points
+### 🧪 Quality and testing
+
+- **Contract tests** between `server` and `ocr-service` (stable APIs and schemas).
+- **OCR edge-case tests:** Diacritics, noise, low resolution, skew, lighting artifacts.
+- **Frontend visual regression:** Cypress component/E2E + visual snapshots.
+- **Load testing:** k6/Artillery for throughput, latency, cache behavior.
+
+### 🔐 Security
+
+- **Interface protection:** Rate limiting, input validation, CORS, payload size limits.
+- **Secrets management:** `.env` for local only; in production use CI/CD secrets or a KV store.
+- **Auditability:** Audit logs, basic RBAC for admin operations (e.g., cache invalidation).
+
+### 🤔 Discussion points
 
 - **AI Allergen Guessing:** While omitted for safety, the feasibility and reliability of AI predicting potential allergens based on dish names could be discussed.
 - **Tesseract Accuracy:** For OCR, Tesseract's accuracy can vary. Exploring alternative OCR services (cloud-based or other models) could be a future step if accuracy is insufficient.
