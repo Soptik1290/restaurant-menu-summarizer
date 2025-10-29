@@ -1,38 +1,39 @@
-# 🍽️ Restaurant Menu Summarizer (DXH AI Developer Task)
+# 🍽️ Restaurant Menu Summarizer
+
+**Live Application:** [**https://stark-dev.tech**](https://stark-dev.tech)
 
 ## 📖 About The Project
 
-This project is a web application designed to fetch, parse, and summarize the daily menu from a restaurant's website, image, or PDF URL. It uses an AI model (OpenAI) via tool calling to extract structured menu data and caches the results for efficiency. The application includes a NestJS backend, a Python microservice for OCR/PDF processing, and a React frontend.
+This project is a full-stack web application designed to fetch, parse, and summarize the daily menu from a restaurant's website, image, or PDF URL. It uses an AI model (OpenAI) via tool calling to extract structured menu data and caches the results in Redis.
 
-This project fulfills the requirements of the DXH AI Developer technical task.
+The application is fully containerized with Docker and features a complete CI/CD pipeline using GitHub Actions for automatic testing and deployment to a Hetzner Cloud VPS.
+
+This project fulfills all core requirements, mandatory tasks (caching, testing), and several bonus objectives (Docker, FE design, advanced error handling, E2E tests) of the DXH AI Developer technical task.
 
 ---
 
 ## 🚀 Features
 
-- **URL Input:** Accepts a URL for a restaurant's menu page.
-- **Content Fetching:** Retrieves content from the URL.
-- **Format Handling:** Supports HTML pages, image files (PNG, JPG, etc.), and PDF files.
-- **AI Extraction:** Uses OpenAI (GPT-4o/GPT-5-mini) with Tool Calling to extract menu items (name, price, category, allergens, weight) and restaurant name into a structured JSON format .
-- **Daily Menu Focus:** Attempts to identify the menu specifically for the current day, handling weekly and weekend menus.
-- **Error Handling:** Provides user feedback for various issues like invalid URLs, fetch errors (404, timeout), unsupported content types, or missing menus.
-- **Caching:** Caches successfully extracted menus (keyed by URL + Date) in Redis to reduce API calls and improve response time . Cache TTL is set to 1 hour.
-- **Interactive Frontend:** Simple React interface with dark mode, frosted glass effects, animated background, and interactive elements.
-- **Dockerized:** All services (Backend, Frontend, OCR/PDF, Redis) are containerized using Docker and Docker Compose for easy setup and deployment.
-
----
-
-## 📂 Project Structure
-
-```
-client/         # React frontend (TypeScript, Tailwind CSS)
-server/         # NestJS backend (TypeScript)
-ocr-service/    # Python microservice for OCR/PDF (FastAPI)
-docker-compose.yml
-package.json
-README.md
-.env            # OpenAI API key (not in repo)
-```
+- **Multi-Format Input:** Accepts a URL for a restaurant's menu, supporting:
+  - **HTML** pages (parsed with Cheerio)
+  - **Images** (PNG, JPG, etc., processed by a Tesseract OCR microservice)
+  - **PDF** files (processed by a Pdfplumber microservice)
+- **AI Extraction:** Uses OpenAI (GPT-4o/GPT-5-mini) with Tool Calling to extract structured JSON data (name, price, category, etc.).
+- **Smart Date Handling:** Prompt is engineered to find the menu for the current day, including complex cases like "Weekend Menus" or pages with incorrect date formatting.
+- **Persistent Caching:** Caches successful results in **Redis** (keyed by URL + Date, 1-hour TTL) to reduce API calls and improve speed.
+- **Robust Error Handling:** Frontend displays user-friendly messages for 404s, timeouts, unsupported file types, or if the AI detects the restaurant is closed.
+- **Polished Frontend:**
+  - Dark mode UI with "frosted glass" effects using **Tailwind CSS**.
+  - Animated emoji background for visual appeal.
+  - Interactive "Dynamic Island" style input pill for submitting new URLs or refreshing.
+  - Side-by-side JSON viewer with a "Copy to Clipboard" button.
+- **CI/CD Pipeline:**
+  - **Continuous Integration (CI):** On every push, GitHub Actions automatically runs backend unit tests, backend E2E tests (with a live Redis service), and frontend build tests.
+  - **Continuous Deployment (CD):** On a successful push to `main`, GitHub Actions automatically builds and pushes new Docker images to GitHub Container Registry (GHCR), then connects to the production server via SSH to pull the new images and restart the application.
+- **Production Deployment:**
+  - Hosted on a **Hetzner Cloud VPS**.
+  - Served via a **Nginx Reverse Proxy** (running on the host) for routing.
+  - Secured with **HTTPS** using a free Let's Encrypt SSL certificate (managed by Certbot).
 
 ---
 
@@ -44,118 +45,114 @@ README.md
 - **AI:** OpenAI API (GPT-5-mini)
 - **Caching:** Redis
 - **Containerization:** Docker, Docker Compose
+- **Deployment:** Hetzner Cloud VPS, Nginx (Reverse Proxy), GitHub Actions (CI/CD)
+- **Testing:** Jest (Unit), Supertest (Backend E2E), Cypress (Frontend E2E)
 - **HTTP Client:** Axios
 - **HTML Parsing:** Cheerio
-- **Testing:** Jest (Unit & E2E), Supertest (E2E)
 
 ---
 
-## ⚙️ Setup & Prerequisites
+## ⚙️ Setup & Prerequisites (Pro Lokální Vývoj)
 
 1.  **Clone the repository:**
     ```bash
-    https://github.com/Soptik1290/restaurant-menu-summarizer
+    git clone [https://github.com/Soptik1290/restaurant-menu-summarizer.git](https://github.com/Soptik1290/restaurant-menu-summarizer.git)
+    cd restaurant-menu-summarizer
     ```
-2.  **Install Docker Desktop:** Make sure Docker Desktop is installed and running. This is needed for Redis and running the containerized application.
+2.  **Install Docker Desktop:** Must be running.
 3.  **Install Node.js & npm:** Required for installing dependencies and running helper scripts.
 4.  **Install Python & pip:** Required for the OCR/PDF service dependencies.
 5.  **Install Tesseract:** The OCR engine needs to be installed locally _if you intend to run the Python service outside of Docker_. Follow instructions for your OS (e.g., from [UB Mannheim Tesseract](https://github.com/UB-Mannheim/tesseract/wiki)). Ensure it's added to your system PATH and include the Czech (`ces`) language pack.
-6.  **Create `.env` file:** In the **root** project directory, create a file named `.env` and add your OpenAI API key:
+6.  **Create Root `.env` file:** Vytvoř `.env` v hlavní složce pro `docker-compose`:
     ```dotenv
-    OPENAI_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+    OPENAI_API_KEY=sk-xxxxxxxx
     ```
-    _(Note: This file is ignored by `.gitignore`)_
+7.  **Create Server `.env` file:** Vytvoř `server/.env` pro `npm run start:dev`:
+    ```dotenv
+    OCR_SERVICE_URL=http://localhost:8000
+    ```
+8.  **Create Client `.env` file:** Vytvoř `client/.env` pro `npm start`:
+    ```dotenv
+    REACT_APP_API_URL=http://localhost:3001
+    ```
+    _(Všechny `.env` soubory jsou ignorovány souborem `.gitignore`)_
 
 ---
 
-## 🐳 Running the Application (Docker Compose - Recommended)
+## 💻 Running Locally (Development)
 
-This is the easiest way to run the entire application (Backend, Frontend, OCR/PDF Service, Redis).
+Pro lokální vývoj doporučuji spouštět služby manuálně ve 4 terminálech pro nejlepší přehled a hot-reload:
 
-1.  **Ensure Docker Desktop is running.**
-2.  Open a terminal (Git Bash recommended for consistency) in the **root** project directory.
-3.  Build and start all services:
+1.  **Terminál 1 (Redis):**
     ```bash
-    docker-compose up --build
+    # V kořenové složce
+    docker compose up redis
     ```
-    - The `--build` flag is only needed the first time or after changing code/Dockerfiles. Subsequent starts can use `docker-compose up`.
-4.  Wait for all services to build and start. You should see logs from `server`, `client`, `ocr`, and `redis`.
-5.  Access the frontend in your browser at: **`http://localhost:3000`**
-6.  The backend API is available at `http://localhost:3001`.
-7.  The OCR/PDF service is available at `http://localhost:8000`.
-
-To stop the application, press `Ctrl+C` in the terminal where `docker-compose up` is running.
-
----
-
-## 💻 Running Services Individually (Development)
-
-Alternatively, you can run each service in its own terminal:
-
-1.  **Terminal 1 (Redis via Docker Compose):**
-    ```bash
-    # In root directory
-    docker-compose up redis
-    ```
-2.  **Terminal 2 (OCR/PDF Service):**
+2.  **Terminál 2 (OCR/PDF Service):**
     ```bash
     cd ocr-service
-    # Activate virtual environment
-    source venv/Scripts/activate # or .\venv\Scripts\Activate.ps1 in PowerShell
-    # Install dependencies if needed
-    pip install -r requirements.txt
-    # Start server
+    # Aktivuj virtual environment
+    source venv/Scripts/activate
+    # Spusť server
     uvicorn main:app --reload
     ```
-3.  **Terminal 3 (Backend Server):**
+3.  **Terminál 3 (Backend Server):**
     ```bash
     cd server
-    # Install dependencies if needed
-    npm install
-    # Start server in dev mode
+    # Spusť server v dev módu
     npm run start:dev
     ```
-4.  **Terminal 4 (Frontend Client):**
+4.  **Terminál 4 (Frontend Client):**
     ```bash
     cd client
-    # Install dependencies if needed
-    npm install
-    # Start dev server
+    # Spusť dev server
     npm start
     ```
+    - Aplikace poběží na `http://localhost:3000`.
+
+---
+
+## ☁️ Production Deployment (Hetzner & CI/CD)
+
+This project is automatically deployed to `https://stark-dev.tech` using GitHub Actions.
+
+- **CI (`ci.yml`):** Runs on every push/PR. It executes backend unit tests, backend E2E tests (against a live Redis service), and the frontend build.
+- **CD (`cd.yml`):** Runs **only on push to `main`** (after CI succeeds).
+  1.  Builds and pushes Docker images for `server`, `ocr`, and `client` to GitHub Container Registry (GHCR).
+  2.  Uses SSH to connect to the Hetzner VPS.
+  3.  Copies the `docker-compose.prod.yml` and `.env` file (created from GitHub Secrets) to the server.
+  4.  Logs into GHCR, pulls the new images, and restarts the services using `docker compose -f docker-compose.prod.yml up -d`.
+
+The live server uses Nginx as a reverse proxy (running on the host) to route traffic from `https://stark-dev.tech` to the appropriate containers and provides an SSL certificate via Certbot.
 
 ---
 
 ## 🧪 Running Tests
 
-Tests are run within the `server` directory.
+### Backend (Server)
 
-1.  Navigate to the server directory:
-    ```bash
-    cd server
-    ```
-2.  **Run Unit Tests:**
-    ```bash
-    npm test
-    ```
-    - To run a specific unit test file: `npm test <filename>.spec.ts` (e.g., `npm test menu.service.spec.ts`)
-3.  **Run Integration / E2E Tests:**
-    ```bash
-    npm run test:e2e
-    ```
-    - This command (defined in `server/package.json`) runs files ending in `.e2e-spec.ts`.
+1.  Navigate to the server directory: `cd server`
+2.  **Run Unit Tests:** `npm test` (nebo `npm test menu.service.spec.ts`)
+3.  **Run Integration / E2E Tests:** `npm run test:e2e` (spustí `menu.e2e-spec.ts` a `cache.e2e-spec.ts`)
+
+### Frontend (Client)
+
+1.  Navigate to the client directory: `cd client`
+2.  Run the React dev server: `npm start`
+3.  In a **separate terminal** (also in `client`): `npx cypress open`
+4.  Select `app.cy.ts` to run the E2E test.
 
 ---
 
 ## 💡 Design Considerations & Choices
 
-- **Technology Choice:** The core technologies used in this project – **NestJS** with **TypeScript** for the backend , **React** with **TypeScript** and **Tailwind CSS** for the frontend , **Redis** for caching , **Docker Compose** for containerization , and **Jest** for testing – were largely based on the recommendations provided in the task description . These represent modern and commonly used tools in web development.
-- **Learning Curve:** As I had limited to no prior experience with several of these specific frameworks and tools (particularly NestJS, React, Tailwind, and Unit/Integration testing), a significant part of the development process involved learning them. This was achieved by following tutorials, watching instructional videos, reading documentation, and utilizing AI assistance to understand concepts and troubleshoot implementation details. The resulting code reflects an effort to apply these newly learned concepts cleanly and functionally, rather than demonstrating deep expertise.
-- **Web Content Retrieval & Processing:** While the task allowed for LLM-based web fetching , directly fetching content using `axios` (Option A approach) proved more reliable and controllable, especially for handling non-HTML content. `cheerio` is used for basic HTML text extraction. Recognizing the real-world challenge of image/PDF menus , dedicated Python microservices using **FastAPI**, Tesseract (OCR), and Pdfplumber were added as bonus features to significantly increase the tool's real-world usability. This microservice architecture keeps the main backend focused.
-- **Caching Strategy:** A straightforward Redis cache was implemented as required , using a URL+Date key and a basic 1-hour TTL as a balance between freshness and reducing API calls.
-- **Error Handling:** Implemented specific error handling for common issues (fetch failures , unsupported types , AI failures ) and providing clearer feedback on the frontend, moving beyond generic error messages as discussed in the edge cases . The AI prompt was also refined to detect "closed" statuses.
-- **AI Implementation:** OpenAI API was used with **Tool Calling** to enforce the required structured JSON output . The prompt was iteratively refined in Czech to handle specific cases like weekly/weekend menus and detecting closed restaurants, which required experimentation.
-- **Simplicity vs. Completeness:** While aiming to fulfill the core task and important edge cases (images, PDFs, weekend menus), features like advanced AI-based allergen guessing were omitted due to potential inaccuracy and safety concerns. The focus was on delivering a robust core functionality cleanly.
+- **Technology Choice:** The core technologies (NestJS, React, Redis, Docker) were largely based on the recommendations provided in the task description. These represent modern and commonly used tools.
+- **Learning Curve:** As I had limited prior experience with several of these tools (particularly NestJS, React, and CI/CD pipelines), a significant part of the development process involved learning them. This was achieved by following tutorials, reading documentation, and utilizing AI assistance to troubleshoot implementation details.
+- **Microservice Architecture:** Recognizing the different requirements for OCR/PDF processing, a dedicated Python/FastAPI microservice was created. This keeps the main NestJS backend clean and focused purely on orchestration and AI logic.
+- **CI/CD Pipeline:** GitHub Actions was chosen to automate testing and deployment. The pipeline separates testing (CI) from deployment (CD), building and pushing images to GHCR for a robust and fast deployment to the Hetzner VPS.
+- **Error Handling:** Implemented specific error handling for common issues (404s, timeouts, unsupported types, AI failures) to provide clearer feedback on the frontend. The AI prompt was also refined to detect "closed" statuses.
+- **AI Implementation:** OpenAI API was used with Tool Calling to enforce the required structured JSON output. The prompt was iteratively refined in Czech to handle specific cases like weekly/weekend menus.
+- **Simplicity vs. Completeness:** Features like AI-based allergen guessing were omitted due to potential inaccuracy and safety concerns. The focus was on delivering a robust core functionality cleanly.
 
 ---
 
@@ -169,15 +166,12 @@ Tests are run within the `server` directory.
 
 ### 💬 Other Potential Ideas
 
-- **Frontend E2E Tests:** Implement E2E tests for the React application using Cypress or Playwright.
 - **Prompt Refinement:** Further improve the AI prompt to handle even more complex or unusual menu structures.
-- **Cache Invalidation:** Implement more sophisticated cache invalidation (e.g., webhook on menu change, shorter TTL around lunchtime).
-- **Deployment:** Finalize Docker configuration and deploy the application to Render or a similar platform.
-- **UI/UX Polish:** Further refine UI details, animations, and potentially add loading skeletons.
+- **Cache Invalidation:** Implement more sophisticated cache invalidation (e.g., shorter TTL around lunchtime).
 - **Authentication:** Add simple API key or JWT authentication as suggested.
 - **Advanced Features (From ROADMAP):**
   - Integration with Google Maps for visualization.
-  - Filters by cuisine type or dietary preferences (could tie into AI analysis).
+  - Filters by cuisine type or dietary preferences.
   - User accounts for saving favorites.
   - Notifications for daily lunch updates.
 
