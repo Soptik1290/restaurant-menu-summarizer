@@ -1,5 +1,8 @@
+# CI workflow: backend unit/E2E, frontend build, and Cypress E2E
+
 name: CI - Run Tests
 
+# Trigger on pushes and pull requests targeting the main branch
 on:
   push:
     branches: ["main"]
@@ -7,57 +10,64 @@ on:
     branches: ["main"]
 
 jobs:
-  # Úloha pro testování backendu
+  # Job 1: Backend tests (unit + E2E)
   test-backend:
     name: Run Backend Unit & E2E Tests
     runs-on: ubuntu-latest
-
-    # --- PŘIDÁNO: Spusť Redis službu ---
-    # Toto spustí Docker kontejner s Redisem souběžně s tvým jobem
     services:
       redis:
-        image: redis:latest # Použij oficiální Redis image
+        image: redis:latest
         ports:
-          - 6379:6379 # Zmapuj port 6379 v kontejneru na port 6379 v "host" (runneru)
-        options: >- # Počkej, až bude Redis připravený
+          - 6379:6379
+        options: >-
           --health-cmd "redis-cli ping"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-
     steps:
       - name: Check out code
         uses: actions/checkout@v4
-
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
-
       - name: Install server dependencies
         run: npm install --prefix server
-
       - name: Run server unit tests
         run: npm test --prefix server
         env:
-          # Nastav proměnné prostředí pro testy
-          # GitHub Actions mapuje port služby na localhost runneru
           REDIS_URL: redis://localhost:6379
-          # I když jsou OpenAI a OCR mockované v E2E, je dobré mít proměnné nastavené
-          OPENAI_API_KEY: ${{ secrets.DUMMY_KEY }} # Použij dummy klíč, testy ho stejně nemají volat
+          OPENAI_API_KEY: ${{ secrets.DUMMY_KEY }}
           OCR_SERVICE_URL: http://localhost:8000
-
       - name: Run server E2E tests
         run: npm run test:e2e --prefix server
         env:
-          # Stejné proměnné i pro E2E testy
           REDIS_URL: redis://localhost:6379
           OPENAI_API_KEY: ${{ secrets.DUMMY_KEY }}
           OCR_SERVICE_URL: http://localhost:8000
 
-  # Úloha pro testování frontendu
+  # Job 2: Frontend build verification
   test-frontend-build:
     name: Test Frontend Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install client dependencies
+        run: npm install --prefix client
+      - name: Build client
+        run: npm run build --prefix client
+        env:
+          REACT_APP_API_URL: /api
+          CI: false
+
+  # Job 3: Frontend E2E tests (Cypress)
+  test-frontend-e2e:
+    name: Run Frontend E2E (Cypress) Tests
     runs-on: ubuntu-latest
 
     steps:
@@ -72,10 +82,18 @@ jobs:
       - name: Install client dependencies
         run: npm install --prefix client
 
-      - name: Build client
-        run: npm run build --prefix client
-        env:
-          # Nastav proměnnou pro build
-          REACT_APP_API_URL: /api
-          # --- PŘIDÁNO: Zabraň varováním, aby shodila build ---
-          CI: false
+      # Provide .env consumed by `npm start`
+      # Ensures the client calls http://localhost:3001 so the Cypress intercept matches
+      - name: Create client .env file
+        run: |
+          echo "REACT_APP_API_URL=http://localhost:3001" > client/.env
+
+      # Use the official Cypress GitHub Action
+      - name: Run Cypress E2E Tests
+        uses: cypress-io/github-action@v6
+        with:
+          working-directory: client # Frontend project root
+          start: npm start # Start React dev server
+          wait-on: "http://localhost:3000" # Wait until dev server is ready
+          wait-on-timeout: 120 # Max 2 minutes
+          browser: chrome # Run tests in Chrome (headless in CI)
