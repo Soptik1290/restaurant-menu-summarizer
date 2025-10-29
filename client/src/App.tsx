@@ -28,8 +28,8 @@ function App() {
     setShowJson(false); // Hide JSON on new search
     setSubmittedUrl(url); // Update the displayed URL
 
-    // Use environment variable only: set via .env (local) or build args
-    const apiUrl = process.env.REACT_APP_API_URL;
+    // Determine API URL: prefer env, otherwise fall back for local/Cypress runs
+    const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
     console.log(`Using API URL: ${apiUrl}`);
 
     // Ensure apiUrl is defined before making the call
